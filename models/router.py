@@ -1,6 +1,5 @@
 from random import randint
 
-from enums.CellType import CellType
 from models.building import Building
 from models.cell import Cell
 
@@ -19,10 +18,20 @@ class Router:
         router = cls(Building.target_cells[randint(0, len(Building.target_cells) - 1)])
         return router
 
+    @classmethod
+    def n_at_random_target(cls, n):
+        routers = []
+        while len(routers) < n:
+            router = cls(Building.target_cells[randint(0, len(Building.target_cells) - 1)])
+            if not any(r for r in routers if r.cell.id == router.cell.id):
+                routers.append(router)
+
+        return routers
+
     def __init__(self, cell):
         self.cell = cell
 
-    def covers_cell(self, cell): # TODO: check if wall between router an cell
+    def covers_cell(self, cell):  # TODO: check if wall between router an cell
         return self.cell.get_distance_to_cell(cell) <= Router.radius
 
     def get_covered_cells(self):

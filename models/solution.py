@@ -45,8 +45,9 @@ class Solution:
     def is_feasible(self):
         return self.get_cost() <= Building.infrastructure_budget
 
-    def generate_path(self):
+    def connect_routers(self):
         self.connected_cells = []
+        self.routers.sort(key=lambda r: r.cell.get_distance_to_backbone())
 
         for router in self.routers:
             cells_to_connect = router.get_best_path(self.connected_cells)
@@ -59,6 +60,23 @@ class Solution:
         cost_to_add = len(cells_to_connect) * Building.back_bone_cost + Router.unit_cost
         if (self.get_cost() + cost_to_add) <= Building.infrastructure_budget:
             self.routers.append(router)
+            self.connected_cells = self.connected_cells + cells_to_connect
+            return True
+        return False
+
+    def add_routers(self, routers):
+        routers.sort(key=lambda r: r.cell.get_distance_to_backbone())
+        connected_cells = self.connected_cells
+        cells_to_connect = []
+        cost_to_add = 0
+        for router in routers:
+            router_cells_to_connect = router.get_best_path(connected_cells)
+            cells_to_connect += router_cells_to_connect
+            connected_cells += router_cells_to_connect
+            cost_to_add += len(router_cells_to_connect) * Building.back_bone_cost + Router.unit_cost
+
+        if (self.get_cost() + cost_to_add) <= Building.infrastructure_budget:
+            self.routers = self.routers + routers
             self.connected_cells = self.connected_cells + cells_to_connect
             return True
         return False
