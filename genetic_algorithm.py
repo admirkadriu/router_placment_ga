@@ -4,14 +4,14 @@ from models.solution import Solution
 
 
 class GeneticAlgorithm:
-    pop_size = 2
+    pop_size = 10
     tournament_size = 2
     parental_size = 2
 
     def run(self):
         t = 0
         populate = self.initialize()
-        while t < 20:
+        while t < 10:
             parents = self.select(populate)
             children = self.crossover(parents)
             mutated_children = self.mutate(children)
@@ -34,7 +34,6 @@ class GeneticAlgorithm:
             if not any(x for x in parents if x.id == selected.id):
                 parents.append(selected)
         return parents
-        pass
 
     def crossover(self, parents):
         # Variation: Perform crossover on pairs of individuals in Pt with probability p_c; Pct = Cross(Pt)
