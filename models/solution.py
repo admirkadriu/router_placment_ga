@@ -25,7 +25,6 @@ class Solution:
                 routers.append(Router.at_random_target())
 
             i += 1
-        print(Cell.calculation_duration/Cell.calculation_count, Cell.no_calculation_duration/Cell.no_calculation_count)
         return solution
 
     def __init__(self):
