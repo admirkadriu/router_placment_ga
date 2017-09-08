@@ -38,8 +38,25 @@ class Router:
     def get_target_cells_covered(self):
         if self.cell.covered_cells is None:
             self.cell.covered_cells = []
-            for x in range(self.cell.i - self.radius, self.cell.i + self.radius + 1):
-                for y in range(self.cell.j - self.radius, self.cell.j + self.radius + 1):
+
+            west = self.cell.i - self.radius
+            if west < 0:
+                west = 0
+
+            east = self.cell.i + self.radius + 1
+            if east > Building.row_count:
+                east = Building.row_count
+
+            north = self.cell.j - self.radius
+            if north < 0:
+                north = 0
+
+            south = self.cell.j + self.radius + 1
+            if south < Building.column_count:
+                south = Building.column_count
+
+            for x in range(west, east):
+                for y in range(north, south):
                     cell = Cell.get(x, y)
                     if cell.get_type() == CellType.TARGET.value and x >= 0 and y >= 0 and self.covers_cell(cell):
                         self.cell.covered_cells.append(cell)
