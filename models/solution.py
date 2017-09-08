@@ -19,12 +19,14 @@ class Solution:
         i = 0
         while can_add:
             router = routers[i]
-            if not any(r for r in solution.routers if r.cell.id == router.cell.id):
+            if not any(r for r in solution.routers if r.cell.get_distance_to_cell(router.cell) < (Router.radius/2)):
                 can_add = solution.add_router(router)
             else:
                 routers.append(Router.at_random_target())
 
             i += 1
+
+        solution.calc_score()
         return solution
 
     def __init__(self):

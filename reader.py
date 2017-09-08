@@ -24,13 +24,13 @@ class Reader:
                     Building.infrastructure_budget = float(line_split[2])
                 else:
                     i, j = map(int, line_split)
-                    Building.back_bone_cell = Cell(i, j)
+                    Building.back_bone_cell = Cell.get(i, j)
             else:
                 cells_row = list(line)
                 Building.planimetry.append(cells_row)
                 for column, cell in enumerate(cells_row):
                     if cell == CellType.TARGET.value:
-                        Building.target_cells.append(Cell(index, column))
+                        Building.target_cells.append(Cell.get(index, column))
 
         file.close()
         return

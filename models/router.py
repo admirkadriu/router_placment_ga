@@ -1,5 +1,6 @@
 from random import randint
 
+from enums.CellType import CellType
 from models.building import Building
 from models.cell import Cell
 
@@ -10,7 +11,7 @@ class Router:
 
     @classmethod
     def at_position(cls, i, j):
-        router = cls(Cell(i, j))
+        router = cls(Cell.get(i, j))
         return router
 
     @classmethod
@@ -34,15 +35,16 @@ class Router:
     def covers_cell(self, cell):  # TODO: check if wall between router an cell
         return self.cell.get_distance_to_cell(cell) <= Router.radius
 
-    def get_covered_cells(self):
-        covered_cells = []
-        for x in range(self.cell.i - self.radius, self.cell.i + self.radius + 1):
-            for y in range(self.cell.j - self.radius, self.cell.j + self.radius + 1):
-                cell = Cell(x, y)
-                if x >= 0 and y >= 0 and self.covers_cell(cell):
-                    covered_cells.append(cell)
+    def get_target_cells_covered(self):
+        if self.cell.covered_cells is None:
+            self.cell.covered_cells = []
+            for x in range(self.cell.i - self.radius, self.cell.i + self.radius + 1):
+                for y in range(self.cell.j - self.radius, self.cell.j + self.radius + 1):
+                    cell = Cell.get(x, y)
+                    if cell.get_type() == CellType.TARGET.value and x >= 0 and y >= 0 and self.covers_cell(cell):
+                        self.cell.covered_cells.append(cell)
 
-        return covered_cells
+        return self.cell.covered_cells
 
     def get_best_path(self, connected_cells):
         nearest_cell = Building.back_bone_cell
@@ -62,24 +64,24 @@ class Router:
         while self.cell.i != i or self.cell.j != j:
             if i == self.cell.i:
                 if j < self.cell.j:
-                    cells.append(Cell(i, j + 1))
+                    cells.append(Cell.get(i, j + 1))
                 else:
-                    cells.append(Cell(i, j - 1))
+                    cells.append(Cell.get(i, j - 1))
             elif j == self.cell.j:
                 if i < self.cell.i:
-                    cells.append(Cell(i + 1, j))
+                    cells.append(Cell.get(i + 1, j))
                 else:
-                    cells.append(Cell(i - 1, j))
+                    cells.append(Cell.get(i - 1, j))
             elif j < self.cell.j:
                 if i < self.cell.i:
-                    cells.append(Cell(i + 1, j + 1))
+                    cells.append(Cell.get(i + 1, j + 1))
                 else:
-                    cells.append(Cell(i - 1, j + 1))
+                    cells.append(Cell.get(i - 1, j + 1))
             else:
                 if i < self.cell.i:
-                    cells.append(Cell(i + 1, j - 1))
+                    cells.append(Cell.get(i + 1, j - 1))
                 else:
-                    cells.append(Cell(i - 1, j - 1))
+                    cells.append(Cell.get(i - 1, j - 1))
 
             i = cells[-1].i
             j = cells[-1].j
