@@ -1,14 +1,14 @@
+import time
 from uuid import uuid4
 
 from models.building import Building
 from models.router import Router
-from models.cell import Cell
 
 
 class Solution:
-
     @classmethod
     def generate_feasible(cls):
+        t0 = time.time()
         solution = cls()
         bulk_count = int(Building.infrastructure_budget / (Router.unit_cost * Building.back_bone_cost))
 
@@ -19,14 +19,18 @@ class Solution:
         i = 0
         while can_add:
             router = routers[i]
-            if not any(r for r in solution.routers if r.cell.get_distance_to_cell(router.cell) < (Router.radius/2)):
-                can_add = solution.add_router(router)
+            if not any(r for r in solution.routers if r.cell.id == router.cell.id):
+                can_add = solution.add_router(router, False)
             else:
                 routers.append(Router.at_random_target())
 
             i += 1
 
-        solution.calc_score()
+        t1 = time.time()
+        print("Solution Generated: ", solution.is_feasible(), "\n-Time: ", t1 - t0)
+        score = solution.get_score()
+        t2 = time.time()
+        print("-Score: ", score, "; Time: ", t2 - t1)
         return solution
 
     def __init__(self):
@@ -41,6 +45,10 @@ class Solution:
 
     def routers_count(self):
         return len(self.routers)
+
+    def sort_routers(self):
+        self.routers.sort(key=lambda r: r.cell.get_distance_to_backbone())
+        return
 
     def get_score(self):
         if self.calculateScore:
@@ -64,13 +72,15 @@ class Solution:
         self.calculateScore = False
         return self.score
 
-    def add_router(self, router):
+    def add_router(self, router, sort=True):
         cells_to_connect = router.get_best_path(self.connected_cells)
         cost_to_add = len(cells_to_connect) * Building.back_bone_cost + Router.unit_cost
 
         if (self.get_cost() + cost_to_add) <= Building.infrastructure_budget:
             self.routers.append(router)
             self.connected_cells += cells_to_connect
+            if sort:
+                self.sort_routers()
             self.calculateScore = True
             return True
 
@@ -78,7 +88,7 @@ class Solution:
 
     def reconnect_routers(self):
         self.connected_cells = []
-        self.routers.sort(key=lambda r: r.cell.get_distance_to_backbone())
+        self.sort_routers()
 
         for router in self.routers:
             cells_to_connect = router.get_best_path(self.connected_cells)
@@ -86,5 +96,3 @@ class Solution:
 
         self.calculateScore = True
         return
-
-

@@ -1,3 +1,4 @@
+from config import Config
 from enums.CellType import CellType
 from models.building import Building
 from models.cell import Cell
@@ -5,11 +6,10 @@ from models.router import Router
 
 
 class Reader:
-    file_path = 'input/rue_de_londres.in'
 
     @staticmethod
     def read():
-        file = open(Reader.file_path, "r")
+        file = open(Config.file_path, "r")
 
         for index, line in enumerate(file):
             if index < 3:
