@@ -12,12 +12,12 @@ class Solution:
         solution = cls()
         bulk_count = int(Building.infrastructure_budget / (Router.unit_cost * Building.back_bone_cost))
 
-        routers = Router.n_at_random_target(bulk_count)
+        routers = Router.n_at_random_target_clever(bulk_count)
         routers.sort(key=lambda r: r.cell.get_distance_to_backbone())
 
         can_add = True
         i = 0
-        while can_add:
+        while can_add and i < len(routers):
             router = routers[i]
             if not any(r for r in solution.routers if r.cell.id == router.cell.id):
                 can_add = solution.add_router(router, False)

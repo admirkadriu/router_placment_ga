@@ -1,4 +1,4 @@
-from random import randint
+import random
 
 from enums.CellType import CellType
 from models.building import Building
@@ -17,52 +17,69 @@ class Router:
 
     @classmethod
     def at_random_target(cls):
-        router = cls(Building.target_cells[randint(0, len(Building.target_cells) - 1)])
+        random_key = random.choice(list(Building.target_cells))
+        router = cls(Building.target_cells[random_key])
         return router
 
     @classmethod
     def n_at_random_target(cls, n):
         routers = []
+        allowed_cells = dict(Building.target_cells)
         while len(routers) < n:
-            router = cls(Building.target_cells[randint(0, len(Building.target_cells) - 1)])
-            if not any(r for r in routers if r.cell.id == router.cell.id):
-                routers.append(router)
+            random_key = random.choice(list(allowed_cells))
+            router = cls(allowed_cells[random_key])
+            routers.append(router)
+            del allowed_cells[random_key]
+
+        return routers
+
+    @classmethod
+    def n_at_random_target_clever(cls, n):
+        routers = []
+        allowed_cells = dict(Building.target_cells)
+        while len(routers) < n and len(allowed_cells) > 0:
+            random_key = random.choice(list(allowed_cells))
+            router = cls(allowed_cells[random_key])
+            routers.append(router)
+            del allowed_cells[random_key]
+            covered_cells = router.get_target_cells_covered()
+            for i, cell in enumerate(covered_cells):
+                allowed_cells.pop(cell.id, None)
 
         return routers
 
     def __init__(self, cell):
         self.cell = cell
 
-    def covers_cell(self, cell):  # TODO: check if wall between router an cell
-        return self.cell.get_distance_to_cell(cell) <= Router.radius
+    def covers_cell(self, cell):
+        return self.cell.get_distance_to_cell(cell) <= Router.radius and self.cell.is_visible_by(cell)
 
     def get_target_cells_covered(self):
         if self.cell.covered_cells is None:
-
             self.cell.covered_cells = RedisProvider.get(self.cell.id)
             if self.cell.covered_cells is None:
                 self.cell.covered_cells = []
 
-                west = self.cell.i - self.radius
-                if west < 0:
-                    west = 0
+                top = self.cell.i - self.radius
+                if top < 0:
+                    top = 0
 
-                east = self.cell.i + self.radius + 1
-                if east > Building.row_count:
-                    east = Building.row_count
+                bottom = self.cell.i + self.radius
+                if bottom >= Building.row_count:
+                    bottom = Building.row_count - 1
 
-                north = self.cell.j - self.radius
-                if north < 0:
-                    north = 0
+                left = self.cell.j - self.radius
+                if left < 0:
+                    left = 0
 
-                south = self.cell.j + self.radius + 1
-                if south < Building.column_count:
-                    south = Building.column_count
+                right = self.cell.j + self.radius
+                if right >= Building.column_count:
+                    right = Building.column_count - 1
 
-                for i in range(west, east):
-                    for j in range(north, south):
+                for i in range(top, bottom + 1):
+                    for j in range(left, right + 1):
                         cell = Cell.get(i, j)
-                        if cell.get_type() == CellType.TARGET.value and i >= 0 and j >= 0 and self.covers_cell(cell):
+                        if cell.get_type() == CellType.TARGET.value and self.covers_cell(cell):
                             self.cell.covered_cells.append(cell)
 
                 RedisProvider.set(self.cell.id, self.cell.covered_cells)
