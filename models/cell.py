@@ -1,5 +1,7 @@
 import math
 
+from enums.CellType import CellType
+
 
 class Cell:
     cells_map = {}
@@ -27,6 +29,20 @@ class Cell:
             from models.building import Building
             self.type = Building.planimetry[self.i][self.j]
         return self.type
+
+    def is_visible_by(self, cell):
+        top = min(self.i, cell.i)
+        bottom = max(self.i, cell.i)
+
+        left = min(self.j, cell.j)
+        right = max(self.j, cell.j)
+
+        for i in range(top, bottom + 1):
+            for j in range(left, right + 1):
+                if Cell(i, j).get_type() == CellType.WALL.value:
+                    return False
+
+        return True
 
     def get_distance_to_cell(self, cell):
         distance = math.sqrt((self.i - cell.i) ** 2 + (self.j - cell.j) ** 2)
