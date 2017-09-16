@@ -6,7 +6,6 @@ from models.router import Router
 
 
 class Reader:
-
     @staticmethod
     def read():
         file = open(Config.file_path, "r")
@@ -27,10 +26,12 @@ class Reader:
                     Building.back_bone_cell = Cell.get(i, j)
             else:
                 cells_row = list(line)
+                cells_row = cells_row[:Building.column_count]
                 Building.planimetry.append(cells_row)
-                for column, cell in enumerate(cells_row):
-                    if cell == CellType.TARGET.value:
-                        Building.target_cells.append(Cell.get(index, column))
+                for column, cell_type in enumerate(cells_row):
+                    if cell_type == CellType.TARGET.value:
+                        cell = Cell.get(index - 3, column)
+                        Building.target_cells[cell.id] = cell
 
         file.close()
         return
