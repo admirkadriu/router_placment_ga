@@ -52,7 +52,7 @@ class Router:
         self.cell = cell
 
     def covers_cell(self, cell):
-        return self.cell.get_distance_to_cell(cell) <= Router.radius and self.cell.is_visible_by(cell)
+        return self.cell.is_visible_by(cell)
 
     def get_target_cells_covered(self):
         if self.cell.covered_cells is None:

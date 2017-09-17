@@ -1,17 +1,18 @@
-from random import randint
+import random
 
 from models.solution import Solution
+from utils import Utils
 
 
 class GeneticAlgorithm:
-    pop_size = 10
+    pop_size = 100
     tournament_size = 2
     parental_size = 2
 
     def run(self):
         t = 0
         populate = self.initialize()
-        while t < 10:
+        while t < 100:
             parents = self.select(populate)
             children = self.crossover(parents)
             mutated_children = self.mutate(children)
@@ -36,8 +37,22 @@ class GeneticAlgorithm:
         return parents
 
     def crossover(self, parents):
-        # Variation: Perform crossover on pairs of individuals in Pt with probability p_c; Pct = Cross(Pt)
-        return parents
+        parent_one = random.choice(parents)
+        parent_two = random.choice(parents)
+        first_parent_chunk = Utils.chunk_list(parent_one.routers, 4)
+        second_parent_chunk = Utils.chunk_list(parent_two.routers, 4)
+        solution = Solution()
+        routers = first_parent_chunk[2] + first_parent_chunk[0] + second_parent_chunk[3] + second_parent_chunk[1]
+        can_add = True
+        i = 0
+        while can_add and i < len(routers):
+            router = routers[i]
+            if not any(r for r in solution.routers if r.cell.id == router.cell.id):
+                can_add = solution.add_router(router, False)
+            i += 1
+
+        solution.reconnect_routers()
+        return [solution]
 
     def mutate(self, children):
         # Variation: Perform mutation on individuals in Ptc with probability p_m; Pmt = Mutate(Pct)
@@ -49,9 +64,9 @@ class GeneticAlgorithm:
         return new_population[:GeneticAlgorithm.pop_size]
 
     def tournament_selection(self, populate):
-        best = populate[randint(0, GeneticAlgorithm.pop_size - 1)]
+        best = random.choice(populate)
         for i in range(1, GeneticAlgorithm.tournament_size):
-            solution = populate[randint(0, GeneticAlgorithm.pop_size - 1)]
+            solution = random.choice(populate)
             if solution.get_score() > best.get_score():
                 best = solution
 

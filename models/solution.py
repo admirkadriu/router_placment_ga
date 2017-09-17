@@ -12,8 +12,8 @@ class Solution:
         solution = cls()
         bulk_count = int(Building.infrastructure_budget / (Router.unit_cost * Building.back_bone_cost))
 
-        routers = Router.n_at_random_target_clever(bulk_count)
-        routers.sort(key=lambda r: r.cell.get_distance_to_backbone())
+        routers = Router.n_at_random_target(bulk_count)
+        routers.sort(key=lambda r: r.cell.get_distance_to_backbone()) #TODO: insert only when i is %2
 
         can_add = True
         i = 0
