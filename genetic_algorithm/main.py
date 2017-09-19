@@ -1,18 +1,18 @@
 import random
 
+from genetic_algorithm.crossover import Crossover
 from models.solution import Solution
-from utils import Utils
 
 
 class GeneticAlgorithm:
-    pop_size = 100
-    tournament_size = 2
+    pop_size = 200
+    tournament_size = 20
     parental_size = 2
 
     def run(self):
         t = 0
         populate = self.initialize()
-        while t < 100:
+        while t < 1000:
             parents = self.select(populate)
             children = self.crossover(parents)
             mutated_children = self.mutate(children)
@@ -37,22 +37,9 @@ class GeneticAlgorithm:
         return parents
 
     def crossover(self, parents):
-        parent_one = random.choice(parents)
-        parent_two = random.choice(parents)
-        first_parent_chunk = Utils.chunk_list(parent_one.routers, 4)
-        second_parent_chunk = Utils.chunk_list(parent_two.routers, 4)
-        solution = Solution()
-        routers = first_parent_chunk[2] + first_parent_chunk[0] + second_parent_chunk[3] + second_parent_chunk[1]
-        can_add = True
-        i = 0
-        while can_add and i < len(routers):
-            router = routers[i]
-            if not any(r for r in solution.routers if r.cell.id == router.cell.id):
-                can_add = solution.add_router(router, False)
-            i += 1
-
-        solution.reconnect_routers()
-        return [solution]
+        crossover = Crossover(parents)
+        children = crossover.rectangle()
+        return children
 
     def mutate(self, children):
         # Variation: Perform mutation on individuals in Ptc with probability p_m; Pmt = Mutate(Pct)

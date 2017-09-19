@@ -1,3 +1,4 @@
+import random
 import time
 from uuid import uuid4
 
@@ -12,14 +13,14 @@ class Solution:
         solution = cls()
         bulk_count = int(Building.infrastructure_budget / (Router.unit_cost * Building.back_bone_cost))
 
-        routers = Router.n_at_random_target(bulk_count)
-        routers.sort(key=lambda r: r.cell.get_distance_to_backbone()) #TODO: insert only when i is %2
+        routers = Router.n_at_random_target_clever(bulk_count)
+        routers.sort(key=lambda r: r.cell.get_distance_to_backbone())  # TODO: insert only when i is %2
 
         can_add = True
         i = 0
         while can_add and i < len(routers):
             router = routers[i]
-            if not any(r for r in solution.routers if r.cell.id == router.cell.id):
+            if not any(r for r in solution.routers if r.cell.id == router.cell.id):  # TODO: check if this is needed
                 can_add = solution.add_router(router, False)
             else:
                 routers.append(Router.at_random_target())
@@ -46,9 +47,8 @@ class Solution:
     def routers_count(self):
         return len(self.routers)
 
-    def sort_routers(self):
-        self.routers.sort(key=lambda r: r.cell.get_distance_to_backbone())
-        return
+    def is_feasible(self):
+        return self.get_cost() <= Building.infrastructure_budget
 
     def get_score(self):
         if self.calculateScore:
@@ -57,9 +57,6 @@ class Solution:
 
     def get_cost(self):
         return self.routers_count() * Router.unit_cost + self.connected_cells_count() * Building.back_bone_cost
-
-    def is_feasible(self):
-        return self.get_cost() <= Building.infrastructure_budget
 
     def calc_score(self):
         budget_for_routers = self.routers_count() * Router.unit_cost
@@ -71,6 +68,30 @@ class Solution:
         self.score = covered_cells_score + remaining_budget_score
         self.calculateScore = False
         return self.score
+
+    def set_routers(self, routers):
+        r_dict = {}
+        for r in routers:
+            r_dict[r.cell.id] = r
+
+        routers = list(r_dict.values())
+
+        self.connected_cells = []
+        self.score = None
+        self.calculateScore = True
+
+        self.routers = routers
+        self.reconnect_routers()
+
+        while not self.is_feasible():
+            random_router = random.choice(self.routers)
+            self.remove_router(random_router)
+
+        return
+
+    def sort_routers(self):
+        self.routers.sort(key=lambda r: r.cell.get_distance_to_backbone())
+        return
 
     def add_router(self, router, sort=True):
         cells_to_connect = router.get_best_path(self.connected_cells)
@@ -86,6 +107,12 @@ class Solution:
 
         return False
 
+    def remove_router(self, router):
+        for i, r in enumerate(self.routers):
+            if r.cell.id == router.cell.id:
+                del self.routers[i]
+                self.reconnect_routers()
+
     def reconnect_routers(self):
         self.connected_cells = []
         self.sort_routers()
@@ -96,3 +123,17 @@ class Solution:
 
         self.calculateScore = True
         return
+
+    def split_routers_with_rectangle(self, top, left, width, height):
+        bottom = top + height - 1
+        right = left + width - 1
+
+        inside = []
+        outside = []
+        for r in self.routers:
+            if top <= r.cell.i <= bottom and left <= r.cell.j <= right:
+                inside.append(r)
+            else:
+                outside.append(r)
+
+        return [inside, outside]
