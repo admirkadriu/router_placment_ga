@@ -137,3 +137,25 @@ class Solution:
                 outside.append(r)
 
         return [inside, outside]
+
+    def get_inside_rectangle(self, top, left, width, height):
+        bottom = top + height - 1
+        right = left + width - 1
+
+        inside = []
+        for r in self.routers:
+            if top <= r.cell.i <= bottom and left <= r.cell.j <= right:
+                inside.append(r)
+
+        return inside
+
+    def get_midpoint(self):
+        i_list = list(map(lambda router: router.cell.i, self.routers))
+        j_list = list(map(lambda router: router.cell.j, self.routers))
+        i_list.sort()
+        j_list.sort()
+        middle = int((len(i_list) - 1) / 2)
+        i = i_list[middle]
+        j = j_list[middle]
+
+        return i, j

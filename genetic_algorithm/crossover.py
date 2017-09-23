@@ -7,8 +7,8 @@ from models.solution import Solution
 class Crossover:
     def __init__(self, parents):
         self.parents = parents
-        self.defaultHeight = random.randint(4, int(Building.row_count / 2))
-        self.defaultWidth = random.randint(4, int(Building.column_count / 2))
+        self.defaultHeight = random.randint(3, int(Building.row_count / 3))
+        self.defaultWidth = random.randint(3, int(Building.column_count / 3))
         self.couples = []
         self.make_couples()
 
@@ -61,4 +61,23 @@ class Crossover:
         return children
 
     def mid_point(self):
-        pass
+        children = []
+        for couple in self.couples:
+            p1, p2 = couple
+            i1, j1 = p1.get_midpoint()
+            i2, j2 = p2.get_midpoint()
+            i = (i1 + i2) / 2
+            j = (j1 + j2) / 2
+
+            first_quarter = p1.get_inside_rectangle(0, 0, i + 1, j + 1)
+            second_quarter = p2.get_inside_rectangle(0, j, i + 1, Building.column_count - j)
+            third_quarter = p1.get_inside_rectangle(i, 0, Building.row_count - i, j + 1)
+            fourth_quarter = p2.get_inside_rectangle(i, j, Building.row_count - i, Building.column_count - j)
+
+            child1 = Solution()
+            child1.set_routers(first_quarter + second_quarter + third_quarter + fourth_quarter)
+            if child1.get_score() > p1.get_score() or child1.get_score() > p2.get_score():
+                children.append(child1)
+                print("New child", child1.get_score())
+
+        return children
