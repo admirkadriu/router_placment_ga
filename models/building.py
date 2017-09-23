@@ -12,10 +12,9 @@ class Building:
 
     @staticmethod
     def get_covered_cells(routers):
-        covered_cells_map = {}
+        covered_cells = {}
         for router in routers:
             current_covered_cells = router.get_target_cells_covered()
-            for cell in current_covered_cells:
-                covered_cells_map[cell.id] = cell
+            covered_cells.update(current_covered_cells)
 
-        return covered_cells_map.values()
+        return covered_cells.values()

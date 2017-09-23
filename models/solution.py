@@ -37,7 +37,7 @@ class Solution:
     def __init__(self):
         self.id = uuid4()
         self.routers = []
-        self.connected_cells = []
+        self.connected_cells = {}
         self.score = None
         self.calculateScore = True
 
@@ -76,7 +76,7 @@ class Solution:
 
         routers = list(r_dict.values())
 
-        self.connected_cells = []
+        self.connected_cells = {}
         self.score = None
         self.calculateScore = True
 
@@ -99,7 +99,7 @@ class Solution:
 
         if (self.get_cost() + cost_to_add) <= Building.infrastructure_budget:
             self.routers.append(router)
-            self.connected_cells += cells_to_connect
+            self.connected_cells.update(cells_to_connect)
             if sort:
                 self.sort_routers()
             self.calculateScore = True
@@ -114,12 +114,12 @@ class Solution:
                 self.reconnect_routers()
 
     def reconnect_routers(self):
-        self.connected_cells = []
+        self.connected_cells = {}
         self.sort_routers()
 
         for router in self.routers:
             cells_to_connect = router.get_best_path(self.connected_cells)
-            self.connected_cells += cells_to_connect
+            self.connected_cells.update(cells_to_connect)
 
         self.calculateScore = True
         return

@@ -23,20 +23,20 @@ class RedisProvider:
 
     @staticmethod
     def to_redis_cells(cells):
-        ids = list(map(lambda c: c.id, cells))
+        ids = {k: v.id for k, v in cells.items()}
         return ';'.join(ids)
 
     @staticmethod
     def from_redis_cells(ids):
         ids = ids.decode("utf-8")
         cell_ids = ids.split(";")
-        cells = []
+        cells = {}
         if len(ids) < 3:
             return cells
 
         for cell_id in cell_ids:
             cell_id_split = cell_id.split(",")
             cell = Cell.get(int(cell_id_split[0]), int(cell_id_split[1]))
-            cells.append(cell)
+            cells[cell.id] = cell
 
         return cells
