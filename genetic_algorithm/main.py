@@ -1,13 +1,17 @@
 import random
 
 from genetic_algorithm.crossover import Crossover
+from genetic_algorithm.mutation import Mutation
 from models.solution import Solution
+from utils import Utils
 
 
 class GeneticAlgorithm:
-    pop_size = 200
-    tournament_size = 20
+    pop_size = 100
+    tournament_size = 10
     parental_size = 2
+    pc = 0.5
+    pm = 0.5
 
     def run(self):
         t = 0
@@ -19,7 +23,7 @@ class GeneticAlgorithm:
             populate = self.populate_update(populate, mutated_children)
             t += 1
 
-            populate.sort(key=lambda s: s.get_score(), reverse=True)
+        populate.sort(key=lambda s: s.get_score(), reverse=True)
         return populate[0]
 
     def initialize(self):
@@ -30,23 +34,34 @@ class GeneticAlgorithm:
 
     def select(self, populate):
         parents = []
+        available_populate = Utils.list_to_dict(populate, "id")
         while len(parents) < GeneticAlgorithm.parental_size:
-            selected = self.tournament_selection(populate)
-            if not any(x for x in parents if x.id == selected.id):
-                parents.append(selected)
+            selected = self.tournament_selection(list(available_populate.values()))
+            parents.append(selected)
+            del available_populate[selected.id]
         return parents
 
     def crossover(self, parents):
-        crossover = Crossover(parents)
-        children = crossover.rectangle()
+        if random.random() < GeneticAlgorithm.pc:
+            crossover = Crossover(parents)
+            children = crossover.rectangle()
+        else:
+            children = parents
+
         return children
 
-    def mutate(self, children):
-        # Variation: Perform mutation on individuals in Ptc with probability p_m; Pmt = Mutate(Pct)
-        return children
+    def mutate(self, individuals):
+        if random.random() < GeneticAlgorithm.pm:
+            mutation = Mutation(individuals)
+            mutants = mutation.run()
+        else:
+            mutants = individuals
+
+        return mutants
 
     def populate_update(self, populate, mutated_children):
         new_population = populate + mutated_children
+        new_population = list({i.id: i for i in new_population}.values())
         new_population.sort(key=lambda s: s.get_score(), reverse=True)
         return new_population[:GeneticAlgorithm.pop_size]
 

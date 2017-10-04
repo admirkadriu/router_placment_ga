@@ -2,6 +2,7 @@ import random
 import time
 from uuid import uuid4
 
+from enums.CellType import CellType
 from models.building import Building
 from models.router import Router
 
@@ -18,14 +19,16 @@ class Solution:
 
         can_add = True
         i = 0
+        jump = 2
         while can_add and i < len(routers):
             router = routers[i]
-            if not any(r for r in solution.routers if r.cell.id == router.cell.id):  # TODO: check if this is needed
-                can_add = solution.add_router(router, False)
-            else:
-                routers.append(Router.at_random_target())
+            can_add = solution.add_router(router, False)
 
-            i += 1
+            i += jump
+
+            if i >= len(routers):
+                i = jump - 1
+                jump = jump * 2
 
         t1 = time.time()
         print("Solution Generated: ", solution.is_feasible(), "\n-Time: ", t1 - t0)
@@ -39,7 +42,7 @@ class Solution:
         self.routers = []
         self.connected_cells = {}
         self.score = None
-        self.calculateScore = True
+        self.scoreCalculationNeeded = True
 
     def connected_cells_count(self):
         return len(self.connected_cells)
@@ -51,9 +54,12 @@ class Solution:
         return self.get_cost() <= Building.infrastructure_budget
 
     def get_score(self):
-        if self.calculateScore:
+        if self.scoreCalculationNeeded:
             self.calc_score()
         return self.score
+
+    def rename(self):
+        self.id = uuid4()
 
     def get_cost(self):
         return self.routers_count() * Router.unit_cost + self.connected_cells_count() * Building.back_bone_cost
@@ -66,7 +72,7 @@ class Solution:
         covered_cells_score = 1000 * len(Building.get_covered_cells(self.routers))
 
         self.score = covered_cells_score + remaining_budget_score
-        self.calculateScore = False
+        self.scoreCalculationNeeded = False
         return self.score
 
     def set_routers(self, routers):
@@ -78,7 +84,7 @@ class Solution:
 
         self.connected_cells = {}
         self.score = None
-        self.calculateScore = True
+        self.scoreCalculationNeeded = True
 
         self.routers = routers
         self.reconnect_routers()
@@ -94,6 +100,9 @@ class Solution:
         return
 
     def add_router(self, router, sort=True):
+        if router.cell.get_type() != CellType.TARGET.value:
+            return False
+
         cells_to_connect = router.get_best_path(self.connected_cells)
         cost_to_add = len(cells_to_connect) * Building.back_bone_cost + Router.unit_cost
 
@@ -102,16 +111,64 @@ class Solution:
             self.connected_cells.update(cells_to_connect)
             if sort:
                 self.sort_routers()
-            self.calculateScore = True
+            self.scoreCalculationNeeded = True
             return True
 
         return False
 
     def remove_router(self, router):
+        self.scoreCalculationNeeded = True
         for i, r in enumerate(self.routers):
             if r.cell.id == router.cell.id:
                 del self.routers[i]
-                self.reconnect_routers()
+                if r.cell.id != Building.back_bone_cell.id:
+                    self.connected_cells.pop(r.cell.id, None)
+                    cells_to_connect = self.disconnect_neighbor_cells(r.cell, {})
+                    self.connect_group_of_cells(cells_to_connect)
+                break
+
+    def connect_group_of_cells(self, cells):
+        length = len(cells)
+        if length > 1:
+            connected_cells = {}
+            for index, cell in enumerate(cells):
+                if cell.id not in connected_cells:
+                    nearest_cell = cell.get_nearest_cell(cells[0:index] + cells[(index + 1): length])
+                    connected_cells[cell.id] = cell
+                    connected_cells[nearest_cell.id] = nearest_cell
+                    self.connected_cells.update(nearest_cell.get_path_to_cell(cell))
+
+    def contains_router(self, cell):
+        for i, r in enumerate(self.routers):
+            if r.cell.id == cell.id:
+                return True
+
+        return False
+
+    def disconnect_neighbor_cells(self, cell, checked_cells):
+        cells_to_connect = []
+
+        cells_to_check = cell.get_neighbors_cells()
+
+        cells_to_check_dict = {}
+        cells_to_remove = []
+
+        for cell in cells_to_check:
+            cells_to_check_dict[cell.id] = cell
+            if cell.id not in checked_cells and (
+                            cell.id in self.connected_cells or cell.id == Building.back_bone_cell.id):
+                if (self.contains_router(cell) or cell.id == Building.back_bone_cell.id):
+                    cells_to_connect.append(cell)
+                else:
+                    cells_to_remove.append(cell)
+
+        checked_cells.update(cells_to_check_dict)
+
+        for cell in cells_to_remove:
+            self.connected_cells.pop(cell.id, None)
+            cells_to_connect = cells_to_connect + self.disconnect_neighbor_cells(cell, checked_cells)
+
+        return cells_to_connect
 
     def reconnect_routers(self):
         self.connected_cells = {}
@@ -121,7 +178,7 @@ class Solution:
             cells_to_connect = router.get_best_path(self.connected_cells)
             self.connected_cells.update(cells_to_connect)
 
-        self.calculateScore = True
+        self.scoreCalculationNeeded = True
         return
 
     def split_routers_with_rectangle(self, top, left, width, height):
@@ -159,3 +216,11 @@ class Solution:
         j = j_list[middle]
 
         return i, j
+
+    def copy(self):
+        new_solution = Solution()
+        new_solution.routers = [] + self.routers
+        new_solution.connected_cells = dict(self.connected_cells)
+        new_solution.score = self.score
+        new_solution.recalculate_score = self.scoreCalculationNeeded
+        return new_solution

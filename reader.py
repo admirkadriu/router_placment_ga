@@ -31,7 +31,7 @@ class Reader:
                 for column, cell_type in enumerate(cells_row):
                     if cell_type == CellType.TARGET.value:
                         cell = Cell.get(index - 3, column)
-                        Building.target_cells[cell.id] = cell
+                        Building.target_cells.append(cell)
 
         file.close()
         return

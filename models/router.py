@@ -23,29 +23,29 @@ class Router:
 
     @classmethod
     def n_at_random_target(cls, n):
-        routers = []
-        allowed_cells = dict(Building.target_cells)
+        routers = {}
         while len(routers) < n:
-            random_key = random.choice(list(allowed_cells))
-            router = cls(allowed_cells[random_key])
-            routers.append(router)
-            del allowed_cells[random_key]
+            router = random.choice(Building.target_cells)
+            if router.cell.id not in routers:
+                routers[router.cell.id] = router
 
-        return routers
+        return list(routers)
 
     @classmethod
     def n_at_random_target_clever(cls, n):
         routers = []
-        allowed_cells = dict(Building.target_cells)
-        while len(routers) < n and len(allowed_cells) > 0:
-            random_key = random.choice(list(allowed_cells))
-            router = cls(allowed_cells[random_key])
-            routers.append(router)
-            del allowed_cells[random_key]
-            covered_cells = router.get_target_cells_covered()
-            for i, key in enumerate(covered_cells):
-                cell = covered_cells[key]
-                allowed_cells.pop(cell.id, None)
+        used_cells = set()
+        while len(routers) < n :
+            cell = random.choice(Building.target_cells)
+            if cell.id not in used_cells:
+                router = Router(cell)
+                routers.append(router)
+                used_cells.add(cell.id)
+
+                covered_cells = router.get_target_cells_covered()
+                for cell, key in enumerate(covered_cells):
+                    cell = covered_cells[key]
+                    used_cells.add(cell.id)
 
         return routers
 
@@ -97,38 +97,4 @@ class Router:
                 nearest_cell = cell
                 nearest_cell_distance = current_cell_distance
 
-        return self.get_path(nearest_cell)
-
-    def get_path(self, connected_cell):
-        cells = {}
-        i = connected_cell.i
-        j = connected_cell.j
-        while self.cell.i != i or self.cell.j != j:
-            cell = None
-            if i == self.cell.i:
-                if j < self.cell.j:
-                    cell = Cell.get(i, j + 1)
-                else:
-                    cell = Cell.get(i, j - 1)
-            elif j == self.cell.j:
-                if i < self.cell.i:
-                    cell = Cell.get(i + 1, j)
-                else:
-                    cell = Cell.get(i - 1, j)
-            elif j < self.cell.j:
-                if i < self.cell.i:
-                    cell = Cell.get(i + 1, j + 1)
-                else:
-                    cell = Cell.get(i - 1, j + 1)
-            else:
-                if i < self.cell.i:
-                    cell = Cell.get(i + 1, j - 1)
-                else:
-                    cell = Cell.get(i - 1, j - 1)
-
-            cells[cell.id] = cell
-
-            i = cell.i
-            j = cell.j
-
-        return cells
+        return self.cell.get_path_to_cell(nearest_cell)

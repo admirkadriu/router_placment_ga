@@ -13,3 +13,11 @@ class Utils:
             if len(out[i]) == 0:
                 out[i] = out[i + 1]
         return out
+
+    @staticmethod
+    def list_to_dict(list, id):
+        dict = {}
+        for item in list:
+            dict[getattr(item,id)] = item
+
+        return dict
