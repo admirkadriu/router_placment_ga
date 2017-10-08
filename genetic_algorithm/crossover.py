@@ -46,19 +46,35 @@ class Crossover:
             inside_rp1, outside_rp1 = p1.split_routers_with_rectangle(i, j, height, width)
             inside_rp2, outside_rp2 = p2.split_routers_with_rectangle(i, j, height, width)
 
-            one = set(map(lambda x: x.cell.id, inside_rp1))
-            two = set(map(lambda x: x.cell.id, inside_rp2))
-            can_switch_routers = len(set(one) & set(two)) != len(inside_rp1)
+            routers_from_p1 = set(map(lambda x: x.cell.id, inside_rp1))
+            routers_from_p2 = set(map(lambda x: x.cell.id, inside_rp2))
+            can_switch_routers = len(routers_from_p1.symmetric_difference(routers_from_p2)) != 0
             if can_switch_routers:
                 child1 = Solution()
-                child1.set_routers(inside_rp1 + outside_rp2)
-                children.append(child1)
-                print("New child", child1.get_score())
+                if len(inside_rp2) / len(outside_rp2) > 0.1:
+                    child1.set_routers(inside_rp1 + outside_rp2)
+                    children.append(child1)
+                    print("New child", child1.get_score())
+                else:
+                    child1 = p2.copy()
+                    for router in inside_rp2:
+                        child1.remove_router(router)
 
-                child2 = Solution()
-                child2.set_routers(inside_rp2 + outside_rp1)
-                children.append(child2)
-                print("New child", child2.get_score())
+                    for router in inside_rp1:
+                        child1.add_router(router)
+
+                if len(inside_rp1) / len(outside_rp1) > 0.1:
+                    child2 = Solution()
+                    child2.set_routers(inside_rp2 + outside_rp1)
+                    children.append(child2)
+                    print("New child", child2.get_score())
+                else:
+                    child2 = p1.copy()
+                    for router in inside_rp1:
+                        child2.remove_router(router)
+
+                    for router in inside_rp2:
+                        child2.add_router(router)
 
         return children
 

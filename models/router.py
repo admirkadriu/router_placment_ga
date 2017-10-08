@@ -35,7 +35,7 @@ class Router:
     def n_at_random_target_clever(cls, n):
         routers = []
         used_cells = set()
-        while len(routers) < n :
+        while len(routers) < n and (len(Building.target_cells) - len(used_cells) > 5):
             cell = random.choice(Building.target_cells)
             if cell.id not in used_cells:
                 router = Router(cell)
@@ -59,7 +59,7 @@ class Router:
         if self.cell.covered_cells is None:
             self.cell.covered_cells = RedisProvider.get(self.cell.id)
             if self.cell.covered_cells is None:
-                self.cell.covered_cells = []
+                self.cell.covered_cells = {}
 
                 top = self.cell.i - self.radius
                 if top < 0:
@@ -81,7 +81,7 @@ class Router:
                     for j in range(left, right + 1):
                         cell = Cell.get(i, j)
                         if cell.get_type() == CellType.TARGET.value and self.covers_cell(cell):
-                            self.cell.covered_cells.append(cell)
+                            self.cell.covered_cells[cell.id] = cell
 
                 RedisProvider.set(self.cell.id, self.cell.covered_cells)
 

@@ -2,51 +2,48 @@ import random
 
 from models.building import Building
 from models.router import Router
-from models.solution import Solution
 
 
 class Mutation:
     def __init__(self, individuals):
         self.individuals = individuals
-        self.current_person_clone = Solution()
+        self.clone = None
         pass
 
-    def small_shift(self):
-        random_router = random.choice(self.current_person_clone.routers)
-        self.current_person_clone.remove_router(random_router)
-        neighbor_cell = random.choice(random_router.cell.get_neighbors_cells())
-        self.current_person_clone.add_router(Router(neighbor_cell))
-        return self.current_person_clone
-
-    def big_shift(self):
-        random_router = random.choice(self.current_person_clone.routers)
-        self.current_person_clone.remove_router(random_router)
+    def shift(self):
+        random_router = random.choice(self.clone.routers)
+        self.clone.remove_router(random_router)
         neighbor_cell = random.choice(random_router.cell.get_neighbors_cells(10))
-        self.current_person_clone.add_router(Router(neighbor_cell))
+        self.clone.add_router(Router(neighbor_cell))
 
     def random_move(self):
-        random_router = random.choice(self.current_person_clone.routers)
-        self.current_person_clone.remove_router(random_router)
-        self.current_person_clone.add_router(Router(random.choice(Building.target_cells)))
+        for i in range(0, random.randint(0, 4)):
+            random_router = random.choice(self.clone.routers)
+            self.clone.remove_router(random_router)
+            self.clone.add_router(Router(random.choice(Building.target_cells)))
 
-    def add_new_one(self):
-        self.current_person_clone.add_router(Router(random.choice(Building.target_cells)))
+    def add(self):
+        for i in range(0, random.randint(0, 4)):
+            self.clone.add_router(Router(random.choice(Building.target_cells)))
+
+    def remove(self):
+        for i in range(0, random.randint(0, 4)):
+            self.clone.add_router(Router(random.choice(Building.target_cells)))
 
     def run(self):
         for person in self.individuals:
-            self.current_person_clone = person.copy()
-            random_int = random.randint(0,4)
+            self.clone = person.copy()
+            random_int = random.randint(0, 3)
             if random_int == 0:
-                 self.small_shift()
+                self.add()
             elif random_int == 1:
-                self.big_shift()
+                self.remove()
             elif random_int == 2:
                 self.random_move()
-            else:
-                self.add_new_one()
+            elif random_int == 3:
+                self.shift()
 
-            person = self.current_person_clone
-            person.rename()
+            person = self.clone
 
             print("New mutation ", person.get_score())
 
