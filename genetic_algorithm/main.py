@@ -8,15 +8,17 @@ from utils import Utils
 
 class GeneticAlgorithm:
     pop_size = 100
-    tournament_size = 10
+    tournament_size = 5
     parental_size = 2
-    pc = 0.5
-    pm = 0.5
+    pc = 0.0
+    pm = 0.8
+    minutes = 5
 
     def run(self):
         t = 0
         populate = self.initialize()
-        while t < 1000:
+        timeout = time.time() + 60 * GeneticAlgorithm.minutes
+        while time.time() < timeout:
             parents = self.select(populate)
             children = self.crossover(parents)
             mutated_children = self.mutate(children)
