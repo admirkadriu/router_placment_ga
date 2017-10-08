@@ -31,6 +31,7 @@ class Cell:
         self.distance_to_backbone = None
         self.type = None
         self.covered_cells = None
+        self.position = (i, j)
 
     def get_type(self):
         if self.type is None:
@@ -96,7 +97,7 @@ class Cell:
 
         return cells
 
-    def get_neighbors_cells(self, distance = 1):
+    def get_neighbors_cells(self, distance=1):
         neighbors_cells = []
         for i in range(self.i - distance, self.i + distance + 1):
             for j in range(self.j - distance, self.j + distance + 1):
@@ -105,7 +106,7 @@ class Cell:
 
         return neighbors_cells
 
-    def get_nearest_cell(self,cells):
+    def get_nearest_cell(self, cells):
         nearest_cell = cells[0]
         nearest_cell_distance = self.get_distance_to_cell(cells[0])
         for cell in cells[1:]:

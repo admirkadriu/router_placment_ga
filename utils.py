@@ -1,3 +1,6 @@
+import numpy as np
+
+
 class Utils:
     @staticmethod
     def chunk_list(array, num):
@@ -18,6 +21,14 @@ class Utils:
     def list_to_dict(list, id):
         dict = {}
         for item in list:
-            dict[getattr(item,id)] = item
+            dict[getattr(item, id)] = item
 
         return dict
+
+    @staticmethod
+    def get_cells_tuples(cells):
+        tuple_list = []
+        for key, cell in cells.items():
+            tuple_list.append(cell.position)
+
+        return tuple_list

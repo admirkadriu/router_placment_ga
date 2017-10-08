@@ -5,6 +5,7 @@ from uuid import uuid4
 from enums.CellType import CellType
 from models.building import Building
 from models.router import Router
+from redis_provider import RedisProvider
 
 
 class Solution:
@@ -16,6 +17,7 @@ class Solution:
 
         routers = Router.n_at_random_target_clever(bulk_count)
         routers.sort(key=lambda r: r.cell.get_distance_to_backbone())  # TODO: insert only when i is %2
+        tg = time.time()
 
         can_add = True
         i = 0
@@ -30,11 +32,16 @@ class Solution:
                 i = jump - 1
                 jump = jump * 2
 
-        t1 = time.time()
-        print("Solution Generated: ", solution.is_feasible(), "\n-Time: ", t1 - t0)
+        tconnect = time.time()
         score = solution.get_score()
-        t2 = time.time()
-        print("-Score: ", score, "; Time: ", t2 - t1)
+        tscore = time.time()
+        print("Solution Generated: ", solution.is_feasible(), "\n-Time: ", tconnect - t0)
+        print("-Score: ", score, "; Time: ", tscore - tconnect)
+        # print("Random router generation time:", tg - t0)
+        # print("Get from redis time:", RedisProvider.get_seconds)
+        # print("Cells connection time:", solution.connect_cells_time)
+        RedisProvider.get_seconds = 0
+        solution.connect_cells_time = 0
         return solution
 
     def __init__(self):
@@ -43,6 +50,7 @@ class Solution:
         self.connected_cells = {}
         self.score = None
         self.scoreCalculationNeeded = True
+        self.connect_cells_time = 0
 
     def connected_cells_count(self):
         return len(self.connected_cells)
@@ -103,7 +111,9 @@ class Solution:
         if router.cell.get_type() != CellType.TARGET.value:
             return False
 
+        t0 = time.time()
         cells_to_connect = router.get_best_path(self.connected_cells)
+        self.connect_cells_time = self.connect_cells_time + time.time() - t0
         cost_to_add = len(cells_to_connect) * Building.back_bone_cost + Router.unit_cost
 
         if (self.get_cost() + cost_to_add) <= Building.infrastructure_budget:

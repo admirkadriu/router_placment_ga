@@ -1,3 +1,5 @@
+import time
+
 import redis as redis
 
 from config import Config
@@ -5,6 +7,8 @@ from models.cell import Cell
 
 
 class RedisProvider:
+    get_seconds = 0
+
     client = redis.StrictRedis(host=Config.redis_host, port=Config.redis_port, db=Config.redis_db)
     key = Config.file_path + ":"
 
@@ -15,11 +19,14 @@ class RedisProvider:
 
     @staticmethod
     def get(cell_id):
+        t0 = time.time()
         ids = RedisProvider.client.get(RedisProvider.key + cell_id)
         if ids is None:
             return None
+        cells = RedisProvider.from_redis_cells(ids)
+        RedisProvider.get_seconds = RedisProvider.get_seconds + time.time() - t0
 
-        return RedisProvider.from_redis_cells(ids)
+        return cells
 
     @staticmethod
     def to_redis_cells(cells):

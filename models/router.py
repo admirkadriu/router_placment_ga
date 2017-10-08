@@ -1,9 +1,13 @@
 import random
 
+import numpy as np
+import scipy.spatial as spatial
+
 from enums.CellType import CellType
 from models.building import Building
 from models.cell import Cell
 from redis_provider import RedisProvider
+from utils import Utils
 
 
 class Router:
@@ -88,13 +92,11 @@ class Router:
         return self.cell.covered_cells
 
     def get_best_path(self, connected_cells):
-        nearest_cell = Building.back_bone_cell
-        nearest_cell_distance = self.cell.get_distance_to_cell(Building.back_bone_cell)
-        for key in connected_cells:
-            cell = connected_cells[key]
-            current_cell_distance = self.cell.get_distance_to_cell(cell)
-            if current_cell_distance < nearest_cell_distance:
-                nearest_cell = cell
-                nearest_cell_distance = current_cell_distance
+        tuples = Utils.get_cells_tuples(connected_cells)
+        tuples.append(Building.back_bone_cell.position)
+        points = np.array(tuples)
+        point_tree = spatial.cKDTree(points)
+        index = point_tree.query([self.cell.i, self.cell.j], 1)[1]
+        nearest_cell = Cell.get(tuples[index][0], tuples[index][1])
 
         return self.cell.get_path_to_cell(nearest_cell)
