@@ -156,7 +156,7 @@ class Solution:
                         nearest_cell = cell.get_nearest_cell(list(new_cells_to_connect.values()))
                         new_cells_to_connect.update(cell.get_path_to_cell(nearest_cell))
                         new_cells_to_connect[cell.id] = cell
-        else:
+        elif length == 1:
             new_cells_to_connect[cells[0].id] = cells[0]
 
         new_cells_to_connect.pop(Building.back_bone_cell.id, None)
