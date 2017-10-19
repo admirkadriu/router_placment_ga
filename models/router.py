@@ -29,11 +29,11 @@ class Router:
     def n_at_random_target(cls, n):
         routers = {}
         while len(routers) < n:
-            router = random.choice(Building.target_cells)
-            if router.cell.id not in routers:
-                routers[router.cell.id] = router
+            cell = random.choice(Building.target_cells)
+            if cell.id not in routers:
+                routers[cell.id] = Router(cell)
 
-        return list(routers)
+        return list(routers.values())
 
     @classmethod
     def n_at_random_target_clever(cls, n):
