@@ -106,6 +106,15 @@ class Cell:
 
         return neighbors_cells
 
+    def get_connected_neighbors_cells(self, connected_cells):
+        from models.building import Building
+        neighbors_cells = []
+        for cell in self.get_neighbors_cells():
+            if cell.id in connected_cells or cell.id == Building.back_bone_cell.id:
+                neighbors_cells.append(cell)
+
+        return neighbors_cells
+
     def get_nearest_cell(self, cells):
         nearest_cell = cells[0]
         nearest_cell_distance = self.get_distance_to_cell(cells[0])
@@ -116,3 +125,26 @@ class Cell:
                 nearest_cell_distance = current_cell_distance
 
         return nearest_cell
+
+    def is_neighbor_to(self, cell):
+        for neighbor_cell in cell.get_neighbors_cells():
+            if neighbor_cell.id == self.id:
+                return True
+
+        return False
+
+    @staticmethod
+    def are_in_same_row_or_column(cells):
+        i = cells[0].i
+        j = cells[0].j
+        not_same_row = False
+        not_same_column = False
+
+        for cell in cells[1:]:
+            if cell.i != i:
+                not_same_row = True
+
+            if cell.j != j:
+                not_same_column = True
+
+        return not (not_same_row and not_same_column)

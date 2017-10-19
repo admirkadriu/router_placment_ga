@@ -2,6 +2,7 @@ import random
 
 from models.building import Building
 from models.solution import Solution
+from utils import Utils
 
 
 class Crossover:
@@ -49,12 +50,13 @@ class Crossover:
             routers_from_p1 = set(map(lambda x: x.cell.id, inside_rp1))
             routers_from_p2 = set(map(lambda x: x.cell.id, inside_rp2))
             can_switch_routers = len(routers_from_p1.symmetric_difference(routers_from_p2)) != 0
+
             if can_switch_routers:
                 child1 = Solution()
-                if len(inside_rp2) / len(outside_rp2) > 0.1:
+                if len(inside_rp2) / len(outside_rp2) > 0.2:
                     child1.set_routers(inside_rp1 + outside_rp2)
                     children.append(child1)
-                    print("New child", child1.get_score())
+                    #Utils.log("New child", child1.get_score())
                 else:
                     child1 = p2.copy()
                     for router in inside_rp2:
@@ -63,11 +65,13 @@ class Crossover:
                     for router in inside_rp1:
                         child1.add_router(router)
 
-                if len(inside_rp1) / len(outside_rp1) > 0.1:
+                    children.append(child1)
+
+                if len(inside_rp1) / len(outside_rp1) > 0.2:
                     child2 = Solution()
                     child2.set_routers(inside_rp2 + outside_rp1)
                     children.append(child2)
-                    print("New child", child2.get_score())
+                    #Utils.log("New child", child2.get_score())
                 else:
                     child2 = p1.copy()
                     for router in inside_rp1:
@@ -75,6 +79,8 @@ class Crossover:
 
                     for router in inside_rp2:
                         child2.add_router(router)
+
+                    children.append(child2)
 
         return children
 
@@ -96,6 +102,6 @@ class Crossover:
             child1.set_routers(first_quarter + second_quarter + third_quarter + fourth_quarter)
             if child1.get_score() > p1.get_score() or child1.get_score() > p2.get_score():
                 children.append(child1)
-                print("New child", child1.get_score())
+                Utils.log("New child", child1.get_score())
 
         return children

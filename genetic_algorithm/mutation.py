@@ -2,6 +2,7 @@ import random
 
 from models.building import Building
 from models.router import Router
+from utils import Utils
 
 
 class Mutation:
@@ -24,27 +25,29 @@ class Mutation:
 
     def add(self):
         for i in range(0, random.randint(0, 4)):
-            self.clone.add_router(Router(random.choice(Building.target_cells)))
+            added = self.clone.add_router(Router(random.choice(Building.target_cells)))
+            if not added:
+                break
 
     def remove(self):
         for i in range(0, random.randint(0, 4)):
             self.clone.add_router(Router(random.choice(Building.target_cells)))
 
     def run(self):
-        for person in self.individuals:
+        for index, person in enumerate(self.individuals):
             self.clone = person.copy()
-            random_int = random.randint(0, 3)
+            random_int = random.randint(0, 2)
             if random_int == 0:
                 self.add()
             elif random_int == 1:
-                self.remove()
-            elif random_int == 2:
                 self.random_move()
-            elif random_int == 3:
+            elif random_int == 2:
                 self.shift()
+            elif random_int == 1:
+                self.random_move()
 
-            person = self.clone
+            self.individuals[index] = self.clone
 
-            print("New mutation ", person.get_score())
+            #Utils.log("New mutation ", person.get_score())
 
         return self.individuals

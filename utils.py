@@ -1,7 +1,30 @@
+import logging
+import sys
+import time
+
+import matplotlib.pyplot as plt
 import numpy as np
 
 
+def get_logger():
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(message)s')
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+    return logger
+
+
 class Utils:
+    logger = get_logger()
+
+    @staticmethod
+    def log(*args):
+        args = args + (time.strftime("%H:%M:%S"),)
+        Utils.logger.info(args)
+
     @staticmethod
     def chunk_list(array, num):
         avg = len(array) / float(num)
@@ -32,3 +55,45 @@ class Utils:
             tuple_list.append(cell.position)
 
         return tuple_list
+
+    @staticmethod
+    def plot(solution, cell_to_show=None):
+        from models.building import Building
+        h = Building.row_count
+        w = Building.column_count
+        matrix = np.zeros((h, w), dtype=np.int8)
+
+        for i, row in enumerate(Building.planimetry):
+            for j, value in enumerate(row):
+                if value == '-':
+                    matrix[i, j] = 5
+                elif value == '#':
+                    matrix[i, j] = 1
+                else:
+                    matrix[i, j] = 8
+
+        for cell in Building.get_covered_cells(solution.routers):
+            matrix[cell.i, cell.j] = 6
+
+        for key in solution.connected_cells:
+            cell = solution.connected_cells[key]
+            matrix[cell.i, cell.j] = 4
+
+        for router in solution.routers:
+            matrix[router.cell.i, router.cell.j] = 7
+
+        if cell_to_show:
+            for cell in cell_to_show.get_neighbors_cells():
+                matrix[cell.i, cell.j] = 2
+
+        fig = plt.figure()
+
+        ax = plt.Axes(fig, (0, 0, 1, 1))
+        ax.set_axis_off()
+        fig.add_axes(ax)
+        dpi = 100
+        pixel_per_cell = 3
+        fig.set_size_inches(pixel_per_cell * w / dpi, pixel_per_cell * h / dpi)
+        ax.imshow(matrix, cmap=plt.cm.gist_ncar, extent=(0, 1, 0, 1), aspect='auto', interpolation='none')
+
+        plt.show()
