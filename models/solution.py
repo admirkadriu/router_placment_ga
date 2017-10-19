@@ -4,8 +4,10 @@ from uuid import uuid4
 
 from enums.CellType import CellType
 from models.building import Building
+from models.cell import Cell
 from models.router import Router
 from redis_provider import RedisProvider
+from utils import Utils
 
 
 class Solution:
@@ -32,16 +34,19 @@ class Solution:
                 i = jump - 1
                 jump = jump * 2
 
-        tconnect = time.time()
-        score = solution.get_score()
-        tscore = time.time()
-        print("Solution Generated: ", solution.is_feasible(), "\n-Time: ", tconnect - t0)
-        print("-Score: ", score, "; Time: ", tscore - tconnect)
-        # print("Random router generation time:", tg - t0)
-        # print("Get from redis time:", RedisProvider.get_seconds)
-        # print("Cells connection time:", solution.connect_cells_time)
+        # time_connect = time.time()
+        # score = solution.get_score()
+        # time_score = time.time()
+        # Utils.log("Solution Generated: ", solution.is_feasible(), "\n-Time: ", time_connect - t0)
+        # Utils.log("-Score: ", score, "; Time: ", time_score - time_connect)
+        # Utils.log("Random router generation time:", tg - t0)
+        # Utils.log("Get from redis time:", RedisProvider.get_seconds)
+        # Utils.log("Cells connection time:", solution.connect_cells_time)
         RedisProvider.get_seconds = 0
         solution.connect_cells_time = 0
+        solution.reconnect_routers()
+
+        # sUtils.plot(solution)
         return solution
 
     def __init__(self):
@@ -139,14 +144,23 @@ class Solution:
 
     def connect_group_of_cells(self, cells):
         length = len(cells)
+        new_cells_to_connect = {}
         if length > 1:
-            connected_cells = {}
-            for index, cell in enumerate(cells):
-                if cell.id not in connected_cells:
-                    nearest_cell = cell.get_nearest_cell(cells[0:index] + cells[(index + 1): length])
-                    connected_cells[cell.id] = cell
-                    connected_cells[nearest_cell.id] = nearest_cell
-                    self.connected_cells.update(nearest_cell.get_path_to_cell(cell))
+            first_nearest_cell = cells[0].get_nearest_cell(cells[1:])
+            new_cells_to_connect = cells[0].get_path_to_cell(first_nearest_cell)
+            new_cells_to_connect[cells[0].id] = cells[0]
+            new_cells_to_connect[first_nearest_cell.id] = first_nearest_cell
+            if length > 2:
+                for cell in cells[1:]:
+                    if cell.id != first_nearest_cell.id:
+                        nearest_cell = cell.get_nearest_cell(list(new_cells_to_connect.values()))
+                        new_cells_to_connect.update(cell.get_path_to_cell(nearest_cell))
+                        new_cells_to_connect[cell.id] = cell
+        else:
+            new_cells_to_connect[cells[0].id] = cells[0]
+
+        new_cells_to_connect.pop(Building.back_bone_cell.id, None)
+        self.connected_cells.update(new_cells_to_connect)
 
     def contains_router(self, cell):
         for i, r in enumerate(self.routers):
@@ -155,10 +169,27 @@ class Solution:
 
         return False
 
-    def disconnect_neighbor_cells(self, cell, checked_cells):
+    def disconnect_neighbor_cells(self, cell, checked_cells, initial_call=True):
         cells_to_connect = []
 
-        cells_to_check = cell.get_neighbors_cells()
+        cells_to_check = cell.get_connected_neighbors_cells(self.connected_cells)
+
+        if not initial_call and len(cells_to_check) > 1:
+            if len(cells_to_check) == 2:
+                if cells_to_check[0].is_neighbor_to(cells_to_check[1]):
+                    if not Cell.are_in_same_row_or_column(cells_to_check):
+                        self.connected_cells.pop(cell.id, None)
+                        return [cells_to_check[0]]
+                else:
+                    return [cell]
+            elif len(cells_to_check) == 3:
+                if Cell.are_in_same_row_or_column(cells_to_check):
+                    self.connected_cells.pop(cell.id, None)
+                    return [cells_to_check[0]]
+                else:
+                    return [cell]
+            else:
+                return [cell]
 
         cells_to_check_dict = {}
         cells_to_remove = []
@@ -176,7 +207,7 @@ class Solution:
 
         for cell in cells_to_remove:
             self.connected_cells.pop(cell.id, None)
-            cells_to_connect = cells_to_connect + self.disconnect_neighbor_cells(cell, checked_cells)
+            cells_to_connect = cells_to_connect + self.disconnect_neighbor_cells(cell, checked_cells, False)
 
         return cells_to_connect
 
@@ -233,4 +264,19 @@ class Solution:
         new_solution.connected_cells = dict(self.connected_cells)
         new_solution.score = self.score
         new_solution.recalculate_score = self.scoreCalculationNeeded
+        new_solution.id = uuid4()
         return new_solution
+
+    @classmethod
+    def get_from_dict(cls, solution_dict):
+        solution = cls()
+        for position in solution_dict["routers"]:
+            solution.routers.append(Router.at_position(position[0], position[1]))
+
+        for position in solution_dict["connected_cells"]:
+            solution.connected_cells[str(position[0]) + "," + str(position[1])] = Cell(position[0], position[1])
+
+        solution.score = solution_dict["score"]
+        solution.scoreCalculationNeeded = False
+
+        return solution
