@@ -2,7 +2,6 @@ import random
 
 from models.building import Building
 from models.router import Router
-from utils import Utils
 
 
 class Mutation:
@@ -18,36 +17,31 @@ class Mutation:
         self.clone.add_router(Router(neighbor_cell))
 
     def random_move(self):
-        for i in range(0, random.randint(0, 2)):
-            random_router = random.choice(self.clone.routers)
-            self.clone.remove_router(random_router)
-            self.clone.add_router(Router(random.choice(Building.target_cells)))
+        random_router = random.choice(self.clone.routers)
+        self.clone.remove_router(random_router)
+        self.clone.add_router(Router(random.choice(Building.target_cells)))
 
     def add(self):
-        for i in range(0, random.randint(0, 2)):
-            added = self.clone.add_router(Router(random.choice(Building.target_cells)))
-            if not added:
-                break
+        self.clone.add_router(Router(random.choice(Building.target_cells)))
 
     def remove(self):
-        for i in range(0, random.randint(0, 2)):
-            self.clone.add_router(Router(random.choice(Building.target_cells)))
+        self.clone.add_router(Router(random.choice(Building.target_cells)))
 
     def run(self):
         for index, person in enumerate(self.individuals):
             self.clone = person.copy()
-            random_int = random.randint(0, 2)
-            if random_int == 0:
-                self.add()
-            elif random_int == 1:
-                self.random_move()
-            elif random_int == 2:
+            random_int = random.randint(0, 10)
+            if random_int < 6:
                 self.shift()
-            elif random_int == 1:
+            elif random_int < 9:
                 self.random_move()
+            elif random_int == 9:
+                self.add()
+            elif random_int == 10:
+                self.remove()
 
             self.individuals[index] = self.clone
 
-            #Utils.log("New mutation ", person.get_score())
+            # Utils.log("New mutation ", person.get_score())
 
         return self.individuals

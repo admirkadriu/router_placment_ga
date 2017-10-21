@@ -5,6 +5,8 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 
+from models.cell import Cell
+
 
 def get_logger():
     logger = logging.getLogger()
@@ -72,8 +74,9 @@ class Utils:
                 else:
                     matrix[i, j] = 8
 
-        for cell in Building.get_covered_cells(solution.routers):
-            matrix[cell.i, cell.j] = 6
+        for id in solution.covered_cells:
+            cell_id_split = id.split(",")
+            matrix[int(cell_id_split[0]), int(cell_id_split[1])] = 6
 
         for key in solution.connected_cells:
             cell = solution.connected_cells[key]

@@ -19,7 +19,7 @@ class Building:
             current_covered_cells = router.get_target_cells_covered()
             covered_cells.update(current_covered_cells)
 
-        return covered_cells.values()
+        return covered_cells
 
     @staticmethod
     def get_target_cells_dict():
