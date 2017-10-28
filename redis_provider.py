@@ -8,9 +8,10 @@ from models.cell import Cell
 
 class RedisProvider:
     get_seconds = 0
+    calc_seconds = 0
 
     client = redis.StrictRedis(host=Config.redis_host, port=Config.redis_port, db=Config.redis_db)
-    key = Config.file_path + ":"
+    key = Config.file_name + ":"
 
     @staticmethod
     def set(cell_id, value):
@@ -19,31 +20,30 @@ class RedisProvider:
 
     @staticmethod
     def get(cell_id):
-        t0 = time.time()
+        #t0 = time.time()
         ids = RedisProvider.client.get(RedisProvider.key + cell_id)
+        #RedisProvider.get_seconds = RedisProvider.get_seconds + time.time() - t0
         if ids is None:
             return None
+        #t0 = time.time()
         cells = RedisProvider.from_redis_cells(ids)
-        RedisProvider.get_seconds = RedisProvider.get_seconds + time.time() - t0
+        #RedisProvider.calc_seconds = RedisProvider.calc_seconds + time.time() - t0
 
         return cells
 
     @staticmethod
-    def to_redis_cells(cells):
-        ids = {k: v.id for k, v in cells.items()}
-        return ';'.join(ids)
+    def to_redis_cells(cell_ids):
+        return ';'.join(cell_ids)
 
     @staticmethod
     def from_redis_cells(ids):
         ids = ids.decode("utf-8")
         cell_ids = ids.split(";")
-        cells = {}
+        cells = []
         if len(ids) < 3:
             return cells
 
         for cell_id in cell_ids:
-            cell_id_split = cell_id.split(",")
-            cell = Cell.get(int(cell_id_split[0]), int(cell_id_split[1]))
-            cells[cell.id] = cell
+            cells.append(cell_id)
 
         return cells

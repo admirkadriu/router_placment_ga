@@ -1,11 +1,10 @@
 import logging
+import os
+import pathlib
 import sys
 import time
 
 import matplotlib.pyplot as plt
-import numpy as np
-
-from models.cell import Cell
 
 
 def get_logger():
@@ -86,7 +85,7 @@ class Utils:
             matrix[router.cell.i, router.cell.j] = 7
 
         if cell_to_show:
-            for cell in cell_to_show.get_neighbors_cells():
+            for cell in cell_to_show.get_neighbor_cells():
                 matrix[cell.i, cell.j] = 2
 
         fig = plt.figure()
@@ -100,3 +99,26 @@ class Utils:
         ax.imshow(matrix, cmap=plt.cm.gist_ncar, extent=(0, 1, 0, 1), aspect='auto', interpolation='none')
 
         plt.show()
+
+    @staticmethod
+    def print_to_csv(path, file_name, content):
+        pathlib.Path(path).mkdir(parents=True, exist_ok=True)
+
+        with open(path + "/" + file_name + '.csv', "a") as file:
+            file.write('\n\n' + content)
+
+    @staticmethod
+    def dict_to_string(dict):
+        string = ''
+        for key in dict:
+            string += key + ',' + str(dict[key]) + '\n'
+
+        return string
+
+    @staticmethod
+    def list_to_string(list):
+        string = ''
+        for i in list:
+            string += str(i[0]) + ',' + str(i[1]) + '\n'
+
+        return string

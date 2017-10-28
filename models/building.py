@@ -1,4 +1,3 @@
-from models.cell import Cell
 from utils import Utils
 
 
@@ -11,15 +10,6 @@ class Building:
     back_bone_cost = 0.0
     target_cells = []
     target_cells_dict = {}
-
-    @staticmethod
-    def get_covered_cells(routers):
-        covered_cells = {}
-        for router in routers:
-            current_covered_cells = router.get_target_cells_covered()
-            covered_cells.update(current_covered_cells)
-
-        return covered_cells
 
     @staticmethod
     def get_target_cells_dict():

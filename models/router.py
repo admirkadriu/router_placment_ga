@@ -47,9 +47,8 @@ class Router:
                 used_cells.add(cell.id)
 
                 covered_cells = router.get_target_cells_covered()
-                for cell, key in enumerate(covered_cells):
-                    cell = covered_cells[key]
-                    used_cells.add(cell.id)
+                for cell_id in covered_cells:
+                    used_cells.add(cell_id)
 
         return routers
 
@@ -63,7 +62,7 @@ class Router:
         if self.cell.covered_cells is None:
             self.cell.covered_cells = RedisProvider.get(self.cell.id)
             if self.cell.covered_cells is None:
-                self.cell.covered_cells = {}
+                self.cell.covered_cells = []
 
                 top = self.cell.i - self.radius
                 if top < 0:
@@ -85,7 +84,7 @@ class Router:
                     for j in range(left, right + 1):
                         cell = Cell.get(i, j)
                         if cell.get_type() == CellType.TARGET.value and self.covers_cell(cell):
-                            self.cell.covered_cells[cell.id] = cell
+                            self.cell.covered_cells.append(cell.id)
 
                 RedisProvider.set(self.cell.id, self.cell.covered_cells)
 

@@ -1,14 +1,12 @@
 import math
 
 from enums.CellType import CellType
-
+from models.building import Building
 
 class Cell:
     cells_map = {}
-
     @staticmethod
     def is_in_planimetry(i, j):
-        from models.building import Building
         if 0 <= i < Building.row_count and 0 <= j < Building.column_count:
             return True
 
@@ -18,7 +16,7 @@ class Cell:
     def get(cls, i, j):
         key = str(i) + "," + str(j)
         if key in cls.cells_map:
-            return Cell.cells_map[key]
+            return cls.cells_map[key]
 
         cell = cls(i, j)
         cls.cells_map[key] = cell
@@ -35,7 +33,6 @@ class Cell:
 
     def get_type(self):
         if self.type is None:
-            from models.building import Building
             self.type = Building.planimetry[self.i][self.j]
         return self.type
 
@@ -97,19 +94,45 @@ class Cell:
 
         return cells
 
-    def get_neighbors_cells(self, distance=1):
+    def get_neighbor_cells(self, distance=1):
         neighbors_cells = []
-        for i in range(self.i - distance, self.i + distance + 1):
-            for j in range(self.j - distance, self.j + distance + 1):
-                if not (i == self.i and j == self.j) and Cell.is_in_planimetry(i, j):
+
+        top = self.i - distance
+        if top < 0:
+            top = 0
+
+        bottom = self.i + distance
+        if bottom >= Building.row_count:
+            bottom = Building.row_count - 1
+
+        left = self.j - distance
+        if left < 0:
+            left = 0
+
+        right = self.j + distance
+        if right >= Building.column_count:
+            right = Building.column_count - 1
+
+        for i in range(top, bottom + 1):
+            for j in range(left, right + 1):
+                if i != self.i or j != self.j:
                     neighbors_cells.append(Cell.get(i, j))
 
         return neighbors_cells
 
+    def get_neighbor_target_cells(self, distance=1):
+        neighbors_cells = self.get_neighbor_cells(distance)
+        cells = []
+        for cell in neighbors_cells:
+            if cell.get_type() == CellType.TARGET.value:
+                cells.append(cell)
+
+        return cells
+
     def get_connected_neighbors_cells(self, connected_cells):
         from models.building import Building
         neighbors_cells = []
-        for cell in self.get_neighbors_cells():
+        for cell in self.get_neighbor_cells():
             if cell.id in connected_cells or cell.id == Building.back_bone_cell.id:
                 neighbors_cells.append(cell)
 
@@ -127,7 +150,7 @@ class Cell:
         return nearest_cell
 
     def is_neighbor_to(self, cell):
-        for neighbor_cell in cell.get_neighbors_cells():
+        for neighbor_cell in cell.get_neighbor_cells():
             if neighbor_cell.id == self.id:
                 return True
 

@@ -5,6 +5,8 @@ from models.router import Router
 
 
 class Mutation:
+    radius = 10
+
     def __init__(self, individuals):
         self.individuals = individuals
         self.clone = None
@@ -13,13 +15,17 @@ class Mutation:
     def shift(self):
         random_router = random.choice(self.clone.routers)
         self.clone.remove_router(random_router)
-        neighbor_cell = random.choice(random_router.cell.get_neighbors_cells(10))
+        neighbor_cell = random.choice(random_router.cell.get_neighbor_target_cells(Mutation.radius))
         self.clone.add_router(Router(neighbor_cell))
 
     def random_move(self):
         random_router = random.choice(self.clone.routers)
         self.clone.remove_router(random_router)
-        self.clone.add_router(Router(random.choice(Building.target_cells)))
+        cell = random.choice(Building.target_cells)
+        while cell.id in self.clone.covered_cells and (len(Building.target_cells) - len(self.clone.covered_cells) > 5):
+            cell = random.choice(Building.target_cells)
+
+        self.clone.add_router(Router(cell))
 
     def add(self):
         self.clone.add_router(Router(random.choice(Building.target_cells)))

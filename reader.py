@@ -9,6 +9,8 @@ class Reader:
     @staticmethod
     def read():
         file = open(Config.file_path, "r")
+        Building.planimetry = []
+        Building.target_cells = []
 
         for index, line in enumerate(file):
             if index < 3:

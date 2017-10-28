@@ -1,5 +1,7 @@
 import random
 import time
+from functools import partial
+from multiprocessing import Pool
 
 from genetic_algorithm.crossover import Crossover
 from genetic_algorithm.hill_climb import HillClimb
@@ -9,14 +11,20 @@ from utils import Utils
 
 
 class GeneticAlgorithm:
-    pc = 0.7
+    multi_process = False
+    pc = 0.4
     pm = 0.8
 
     def __init__(self, pop_size, tournament_size, parental_size, minutes):
+        self.score_history = []
+
         self.pop_size = pop_size
         self.tournament_size = tournament_size
         self.parental_size = parental_size
-        self.minutes = minutes
+        self.minutes = 0.8 * minutes
+        HillClimb.minutes = 0.2 * minutes
+
+        self.timeout = time.time() + 60 * self.minutes
 
     def run(self, populate=None):
         t = 0
@@ -24,24 +32,47 @@ class GeneticAlgorithm:
         if populate is None:
             populate = self.initialize()
 
-        timeout = time.time() + 60 * self.minutes
-        while time.time() < timeout:
+        while time.time() < self.timeout:
             parents = self.select(populate)
             children = self.crossover(parents)
             mutated_children = self.mutate(children)
 
-            for index, child in enumerate(mutated_children):
-                hill_climb = HillClimb(child)
-                mutated_children[index] = hill_climb.run()
+            mutated_children = self.hill_climb(mutated_children)
 
             populate = self.populate_update(populate, mutated_children)
             if populate[0].score > best_score:
                 best_score = populate[0].score
+                self.score_history.append([time.time(), best_score])
                 Utils.log("Best Updated: ", populate[0].score)
             t += 1
 
         populate.sort(key=lambda s: s.get_score(), reverse=True)
         return populate
+
+    def perform(self):
+        self.timeout = time.time() + 60 * self.minutes
+
+        Utils.log("Pre-processing..")
+        Solution.connect_cells_needed = True
+        Solution.generate_feasible()
+        Solution.connect_cells_needed = False
+        Utils.log("Pre-processing ended..")
+
+        best_individual = self.run()[0]
+
+        score_before_fix = best_individual.get_score()
+        best_individual.fix()
+        difference = score_before_fix - best_individual.get_score()
+
+        for i, record in enumerate(self.score_history):
+            self.score_history[i][1] -= difference
+
+        hill_climb = HillClimb(best_individual)
+        best_individual = hill_climb.run_by_time()
+
+        self.score_history += hill_climb.score_history
+
+        return best_individual
 
     def run_parallel(self, populate=None):
         solutions = self.run(populate)
@@ -92,7 +123,6 @@ class GeneticAlgorithm:
         else:
             children = parents
 
-
         return children
 
     def mutate(self, individuals):
@@ -124,3 +154,24 @@ class GeneticAlgorithm:
                 best = solution
 
         return best
+
+    def hill_climb(self, mutated_children):
+        if len(mutated_children) > 1 and GeneticAlgorithm.multi_process:
+            func = partial(self.do_hill_climb, Solution.estimated_connection_cost, HillClimb.t, Mutation.radius)
+            with Pool(processes=len(mutated_children)) as pool:
+                result = pool.map(func, mutated_children)
+                mutated_children = list(result)
+        else:
+            for index, child in enumerate(mutated_children):
+                hill_climb = HillClimb(child)
+                mutated_children[index] = hill_climb.run_by_iterations()
+
+        return mutated_children
+
+    def do_hill_climb(self, estimated_connection_cost, t, radius, mutated_children):
+        Solution.estimated_connection_cost = estimated_connection_cost
+        HillClimb.t = t
+        Mutation.radius = radius
+        hill_climb = HillClimb(mutated_children)
+        child = hill_climb.run_by_iterations()
+        return child

@@ -38,7 +38,7 @@ class Solution:
                 jump = jump * 2
 
         if Solution.connect_cells_needed and Solution.estimated_connection_cost == 0:
-            Solution.estimated_connection_cost = solution.connected_cells_count() * Building.back_bone_cost
+            Solution.estimated_connection_cost = (solution.connected_cells_count() * Building.back_bone_cost) + (Router.unit_cost*solution.routers_count()*0.0045)
 
         # time_connect = time.time()
         # score = solution.get_score()
@@ -47,9 +47,6 @@ class Solution:
         # Utils.log("-Score: ", score, "; Time: ", time_score - time_connect)
         # Utils.log("Random router generation time:", tg - t0)
         # Utils.log("Get from redis time:", RedisProvider.get_seconds)
-        RedisProvider.get_seconds = 0
-        solution.reconnect_routers()
-
         # sUtils.plot(solution)
         return solution
 
@@ -304,17 +301,17 @@ class Solution:
         return new_solution
 
     def update_covered_cells(self, covered_cells, added):
-        for cell in covered_cells.values():
-            if cell.id in self.covered_cells:
+        for cell_id in covered_cells:
+            if cell_id in self.covered_cells:
                 if added:
-                    self.covered_cells[cell.id] = self.covered_cells[cell.id] + 1
+                    self.covered_cells[cell_id] = self.covered_cells[cell_id] + 1
                 else:
-                    self.covered_cells[cell.id] = self.covered_cells[cell.id] - 1
-                    if self.covered_cells[cell.id] <= 0:
-                        del self.covered_cells[cell.id]
+                    self.covered_cells[cell_id] = self.covered_cells[cell_id] - 1
+                    if self.covered_cells[cell_id] <= 0:
+                        del self.covered_cells[cell_id]
             else:
                 if added:
-                    self.covered_cells[cell.id] = 1
+                    self.covered_cells[cell_id] = 1
         return
 
     @classmethod
