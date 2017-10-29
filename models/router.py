@@ -60,7 +60,7 @@ class Router:
 
     def get_target_cells_covered(self):
         if self.cell.covered_cells is None:
-            self.cell.covered_cells = RedisProvider.get(self.cell.id)
+            self.cell.covered_cells = RedisProvider.get_cell(self.cell.id)
             if self.cell.covered_cells is None:
                 self.cell.covered_cells = []
 
@@ -86,7 +86,7 @@ class Router:
                         if cell.get_type() == CellType.TARGET.value and self.covers_cell(cell):
                             self.cell.covered_cells.append(cell.id)
 
-                RedisProvider.set(self.cell.id, self.cell.covered_cells)
+                RedisProvider.set_cell(self.cell.id, self.cell.covered_cells)
 
         return self.cell.covered_cells
 

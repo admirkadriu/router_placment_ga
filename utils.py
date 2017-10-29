@@ -1,10 +1,10 @@
 import logging
-import os
 import pathlib
 import sys
 import time
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def get_logger():
@@ -23,8 +23,9 @@ class Utils:
 
     @staticmethod
     def log(*args):
-        args = args + (time.strftime("%H:%M:%S"),)
-        Utils.logger.info(args)
+        # args = args + (time.strftime("%H:%M:%S"),)
+        # Utils.logger.info(args)
+        pass
 
     @staticmethod
     def chunk_list(array, num):
@@ -111,7 +112,7 @@ class Utils:
     def dict_to_string(dict):
         string = ''
         for key in dict:
-            string += key + ',' + str(dict[key]) + '\n'
+            string += str(key) + ',' + str(dict[key]) + '\n'
 
         return string
 
@@ -122,3 +123,41 @@ class Utils:
             string += str(i[0]) + ',' + str(i[1]) + '\n'
 
         return string
+
+    @staticmethod
+    def to_discrete_results(results, step):
+        highest_time = results[len(results) - 1][0]
+
+        distinct_score = []
+        for i in range(int(highest_time)):
+            if i % step == 0:
+                distinct_score.append([i, -1])
+
+        search_index = 0
+        for i, result in enumerate(distinct_score):
+            second = distinct_score[i][0]
+            score = distinct_score[i][1]
+            j = search_index
+            while j < len(results) - 1:
+                if int(results[j][0]) == second:
+                    score = results[j][1]
+                    search_index = j
+                    break
+                elif int(results[j][0]) <= second < int(results[j + 1][0]):
+                    score = results[j][1]
+                    search_index = j
+                    break
+                elif int(results[j][0]) >= second <= int(results[j + 1][0]):
+                    score = results[j][1]
+                    search_index = j
+                    break
+                j += 1
+
+            if score == -1:
+                score = results[len(results) - 1][1]
+
+            distinct_score[i][1] = score
+
+        distinct_score.append(results[len(results) - 1])
+
+        return distinct_score

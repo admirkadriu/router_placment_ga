@@ -7,6 +7,7 @@ from genetic_algorithm.crossover import Crossover
 from genetic_algorithm.hill_climb import HillClimb
 from genetic_algorithm.mutation import Mutation
 from models.solution import Solution
+from redis_provider import RedisProvider
 from utils import Utils
 
 
@@ -25,12 +26,14 @@ class GeneticAlgorithm:
         HillClimb.minutes = 0.2 * minutes
 
         self.timeout = time.time() + 60 * self.minutes
+        self.best_score = 0
 
     def run(self, populate=None):
         t = 0
         best_score = 0
         if populate is None:
             populate = self.initialize()
+        self.populate_update(populate)
 
         while time.time() < self.timeout:
             parents = self.select(populate)
@@ -38,12 +41,8 @@ class GeneticAlgorithm:
             mutated_children = self.mutate(children)
 
             mutated_children = self.hill_climb(mutated_children)
-
             populate = self.populate_update(populate, mutated_children)
-            if populate[0].score > best_score:
-                best_score = populate[0].score
-                self.score_history.append([time.time(), best_score])
-                Utils.log("Best Updated: ", populate[0].score)
+
             t += 1
 
         populate.sort(key=lambda s: s.get_score(), reverse=True)
@@ -134,16 +133,16 @@ class GeneticAlgorithm:
 
         return mutants
 
-    def populate_update(self, populate, mutated_children):
+    def populate_update(self, populate, mutated_children=[]):
         new_population = populate + mutated_children
         new_population = list({i.id: i for i in new_population}.values())  # remove duplicates
         new_population.sort(key=lambda s: s.get_score(), reverse=True)
         new_population = new_population[:self.pop_size]
-        # pop = set(x.id for x in populate)
-        # mut = set(x.id for x in mutated_children)
-        # new = set(x.id for x in mutated_children)
-        # Utils.log("In populate and in mutated: ", pop.intersection(mut))
-        # Utils.log("Added on populate: ", new.intersection(mut))
+        if populate[0].score > self.best_score:
+            self.best_score = populate[0].score
+            self.score_history.append([time.time(), self.best_score])
+            Utils.log("Best Updated: ", populate[0].score)
+
         return new_population
 
     def tournament_selection(self, populate, tournament_size, check_if_accepted):

@@ -1,6 +1,7 @@
 import time
 
 from genetic_algorithm.mutation import Mutation
+from redis_provider import RedisProvider
 from utils import Utils
 
 

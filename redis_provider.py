@@ -14,12 +14,23 @@ class RedisProvider:
     key = Config.file_name + ":"
 
     @staticmethod
-    def set(cell_id, value):
+    def set_cell(cell_id, value):
         RedisProvider.client.set(RedisProvider.key + cell_id, RedisProvider.to_redis_cells(value))
         return
 
     @staticmethod
-    def get(cell_id):
+    def set(id, value):
+        RedisProvider.client.set(RedisProvider.key + id, value)
+        return
+
+    @staticmethod
+    def get(id):
+        value = RedisProvider.client.get(RedisProvider.key + id)
+        value = value.decode("utf-8")
+        return value
+
+    @staticmethod
+    def get_cell(cell_id):
         #t0 = time.time()
         ids = RedisProvider.client.get(RedisProvider.key + cell_id)
         #RedisProvider.get_seconds = RedisProvider.get_seconds + time.time() - t0

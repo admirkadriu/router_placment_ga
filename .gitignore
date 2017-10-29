@@ -46,3 +46,4 @@ crashlytics-build.properties
 fabric.properties
 /.idea/
 __pycache__/
+experiments/rue_de_londres/
