@@ -111,6 +111,9 @@ class Solution:
             self.routers.append(router)
             self.update_covered_cells(router.get_target_cells_covered(), True)
 
+        if self.connect_cells_needed:
+            self.reconnect_routers()
+
         while not self.is_feasible():
             random_router = random.choice(self.routers)
             self.remove_router(random_router)
