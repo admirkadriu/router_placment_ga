@@ -6,7 +6,6 @@ from enums.CellType import CellType
 from models.building import Building
 from models.cell import Cell
 from models.router import Router
-from redis_provider import RedisProvider
 from utils import Utils
 
 
@@ -38,7 +37,8 @@ class Solution:
                 jump = jump * 2
 
         if Solution.connect_cells_needed and Solution.estimated_connection_cost == 0:
-            Solution.estimated_connection_cost = (solution.connected_cells_count() * Building.back_bone_cost) + (Router.unit_cost*solution.routers_count()*0.0045)
+            Solution.estimated_connection_cost = (solution.connected_cells_count() * Building.back_bone_cost) + (
+                Router.unit_cost * solution.routers_count() * 0.0045)
 
         # time_connect = time.time()
         # score = solution.get_score()
@@ -55,8 +55,12 @@ class Solution:
         self.routers = []
         self.connected_cells = {}
         self.covered_cells = {}
+        self.uncovered_cells = set(Building.get_target_cells_set())
         self.score = None
         self.score_calculation_needed = True
+        self.movable_routers = set()
+        self.routers_to_be_movable = set()
+        self.routers_to_be_unmovable = set()
 
     def connected_cells_count(self):
         return len(self.connected_cells)
@@ -115,8 +119,8 @@ class Solution:
             self.reconnect_routers()
 
         while not self.is_feasible():
-            random_router = random.choice(self.routers)
-            self.remove_router(random_router)
+            self.sort_by_covered_cells()
+            self.remove_router(self.routers[0])
 
         return
 
@@ -157,6 +161,7 @@ class Solution:
 
         if (self.get_cost() + cost_to_add) <= self.get_available_budget():
             self.routers.append(router)
+            self.movable_routers.add(router.cell.id)
             self.update_covered_cells(router.get_target_cells_covered(), True)
             self.connected_cells.update(cells_to_connect)
             self.score_calculation_needed = True
@@ -168,7 +173,8 @@ class Solution:
         self.score_calculation_needed = True
         for i, r in enumerate(self.routers):
             if r.cell.id == router.cell.id:
-                self.update_covered_cells(self.routers[i].get_target_cells_covered(), False)
+                self.update_covered_cells(r.get_target_cells_covered(), False)
+                self.movable_routers.discard(r.cell.id)
                 del self.routers[i]
                 if Solution.connect_cells_needed:
                     if r.cell.id != Building.back_bone_cell.id:
@@ -257,6 +263,20 @@ class Solution:
 
         return
 
+    def get_worst_router(self):
+        most_covered_cell_id = None
+        most_covered_score = 0
+        for cell_id in random.sample(list(self.covered_cells), int(len(self.covered_cells) / 20)):
+            if self.covered_cells[cell_id] > most_covered_score:
+                most_covered_cell_id = cell_id
+                most_covered_score = self.covered_cells[cell_id]
+
+        i, j = Utils.get_position_from_id(most_covered_cell_id)
+        routers = self.get_inside_rectangle(i - Router.radius, j - Router.radius, Router.radius * 2 + 1,
+                                            Router.radius * 2 + 1)
+
+        return random.choice(routers)
+
     def split_routers_with_rectangle(self, top, left, width, height):
         bottom = top + height - 1
         right = left + width - 1
@@ -295,12 +315,14 @@ class Solution:
 
     def copy(self):
         new_solution = Solution()
+        new_solution.id = uuid4()
         new_solution.routers = [] + self.routers
         new_solution.connected_cells = dict(self.connected_cells)
         new_solution.score = self.score
         new_solution.recalculate_score = self.score_calculation_needed
         new_solution.covered_cells = dict(self.covered_cells)
-        new_solution.id = uuid4()
+        new_solution.uncovered_cells = set(self.uncovered_cells)
+        new_solution.movable_routers = set(self.movable_routers)
         return new_solution
 
     def update_covered_cells(self, covered_cells, added):
@@ -312,10 +334,28 @@ class Solution:
                     self.covered_cells[cell_id] = self.covered_cells[cell_id] - 1
                     if self.covered_cells[cell_id] <= 0:
                         del self.covered_cells[cell_id]
+                        self.uncovered_cells.add(cell_id)
             else:
                 if added:
                     self.covered_cells[cell_id] = 1
+                    self.uncovered_cells.discard(cell_id)
         return
+
+    def set_movable_routers(self, copy_solution=None):
+        if copy_solution is None:
+            copy_solution = self
+
+        self.movable_routers = self.movable_routers.union(copy_solution.routers_to_be_movable)
+        self.movable_routers = self.movable_routers.difference(copy_solution.routers_to_be_unmovable)
+        copy_solution.routers_to_be_movable = set()
+        copy_solution.routers_to_be_unmovable = set()
+
+    def set_routers_to_be_movable(self, cell):
+        routers_to_be_movable = self.get_inside_rectangle(cell.i - (2 * Router.radius),
+                                                          cell.j - (2 * Router.radius),
+                                                          4 * Router.radius, 4 * Router.radius)
+        for router in routers_to_be_movable:
+            self.routers_to_be_movable.add(router.cell.id)
 
     @classmethod
     def get_from_dict(cls, solution_dict):

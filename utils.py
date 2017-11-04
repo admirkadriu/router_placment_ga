@@ -23,9 +23,8 @@ class Utils:
 
     @staticmethod
     def log(*args):
-        # args = args + (time.strftime("%H:%M:%S"),)
-        # Utils.logger.info(args)
-        pass
+        args = args + (time.strftime("%H:%M:%S"),)
+        Utils.logger.info(args)
 
     @staticmethod
     def chunk_list(array, num):
@@ -49,6 +48,14 @@ class Utils:
             dict[getattr(item, id)] = item
 
         return dict
+
+    @staticmethod
+    def list_to_set(list, id):
+        set1 = set()
+        for item in list:
+            set1.add(getattr(item, id))
+
+        return set1
 
     @staticmethod
     def get_cells_tuples(cells):
@@ -161,3 +168,8 @@ class Utils:
         distinct_score.append(results[len(results) - 1])
 
         return distinct_score
+
+    @staticmethod
+    def get_position_from_id(cell_id):
+        return [int(cell_id.split(",")[0]), int(cell_id.split(",")[1])]
+

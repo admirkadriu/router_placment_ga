@@ -6,7 +6,7 @@ from utils import Utils
 
 
 class HillClimb:
-    t = 1500
+    t = 100
     minutes = 1
 
     def __init__(self, solution):
@@ -15,7 +15,7 @@ class HillClimb:
 
     def run_by_iterations(self):
         for i in range(0, HillClimb.t):
-            mutation = Mutation([self.solution])
+            mutation = Mutation([self.solution].copy())
             mutant = mutation.run()[0]
             if mutant.get_score() >= self.solution.get_score():
                 self.solution = mutant
@@ -35,6 +35,7 @@ class HillClimb:
                     Utils.log("Best Updated hc: ", mutant.score)
 
                 self.solution = mutant
+                self.solution.set_movable_routers(mutant)
             i += 1
 
         return self.solution

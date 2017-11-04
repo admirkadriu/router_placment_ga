@@ -7,7 +7,6 @@ from genetic_algorithm.crossover import Crossover
 from genetic_algorithm.hill_climb import HillClimb
 from genetic_algorithm.mutation import Mutation
 from models.solution import Solution
-from redis_provider import RedisProvider
 from utils import Utils
 
 
@@ -59,6 +58,10 @@ class GeneticAlgorithm:
 
         best_individual = self.run()[0]
 
+        HillClimb.minutes *= 0.7
+        hill_climb = HillClimb(best_individual)
+        best_individual = hill_climb.run_by_time()
+
         score_before_fix = best_individual.get_score()
         best_individual.fix()
         difference = score_before_fix - best_individual.get_score()
@@ -66,6 +69,8 @@ class GeneticAlgorithm:
         for i, record in enumerate(self.score_history):
             self.score_history[i][1] -= difference
 
+        HillClimb.minutes /= 0.7
+        HillClimb.minutes *= 0.3
         hill_climb = HillClimb(best_individual)
         best_individual = hill_climb.run_by_time()
 
@@ -126,7 +131,7 @@ class GeneticAlgorithm:
 
     def mutate(self, individuals):
         if random.random() < GeneticAlgorithm.pm:
-            mutation = Mutation(individuals)
+            mutation = Mutation(individuals, True)
             mutants = mutation.run()
         else:
             mutants = individuals
@@ -135,7 +140,7 @@ class GeneticAlgorithm:
 
     def populate_update(self, populate, mutated_children=[]):
         new_population = populate + mutated_children
-        new_population = list({i.id: i for i in new_population}.values())  # remove duplicates
+        # new_population = list({i.id: i for i in new_population}.values())  # remove duplicates
         new_population.sort(key=lambda s: s.get_score(), reverse=True)
         new_population = new_population[:self.pop_size]
         if populate[0].score > self.best_score:
