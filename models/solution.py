@@ -37,8 +37,8 @@ class Solution:
                 jump = jump * 2
 
         if Solution.connect_cells_needed and Solution.estimated_connection_cost == 0:
-            Solution.estimated_connection_cost = (solution.connected_cells_count() * Building.back_bone_cost) + (
-                Router.unit_cost * solution.routers_count() * 0.0045)
+            Solution.estimated_connection_cost = (solution.connected_cells_count() * Building.back_bone_cost) \
+                # + (Router.unit_cost * solution.routers_count() * 0.0045)
 
         # time_connect = time.time()
         # score = solution.get_score()
@@ -61,6 +61,7 @@ class Solution:
         self.movable_routers = set()
         self.routers_to_be_movable = set()
         self.routers_to_be_unmovable = set()
+        self.clever_shift_distance = 2
 
     def connected_cells_count(self):
         return len(self.connected_cells)
@@ -161,7 +162,7 @@ class Solution:
 
         if (self.get_cost() + cost_to_add) <= self.get_available_budget():
             self.routers.append(router)
-            self.movable_routers.add(router.cell.id)
+            self.routers_to_be_movable.add(router.cell.id)
             self.update_covered_cells(router.get_target_cells_covered(), True)
             self.connected_cells.update(cells_to_connect)
             self.score_calculation_needed = True
@@ -174,7 +175,7 @@ class Solution:
         for i, r in enumerate(self.routers):
             if r.cell.id == router.cell.id:
                 self.update_covered_cells(r.get_target_cells_covered(), False)
-                self.movable_routers.discard(r.cell.id)
+                self.routers_to_be_unmovable.add(r.cell.id)
                 del self.routers[i]
                 if Solution.connect_cells_needed:
                     if r.cell.id != Building.back_bone_cell.id:
@@ -323,6 +324,7 @@ class Solution:
         new_solution.covered_cells = dict(self.covered_cells)
         new_solution.uncovered_cells = set(self.uncovered_cells)
         new_solution.movable_routers = set(self.movable_routers)
+        new_solution.clever_shift_distance = self.clever_shift_distance
         return new_solution
 
     def update_covered_cells(self, covered_cells, added):
@@ -340,6 +342,12 @@ class Solution:
                     self.covered_cells[cell_id] = 1
                     self.uncovered_cells.discard(cell_id)
         return
+
+    def reset_movable_routers(self):
+        self.movable_routers = set()
+        for router in self.movable_routers:
+            self.movable_routers.add(router.cell.id)
+        self.clever_shift_distance += 2
 
     def set_movable_routers(self, copy_solution=None):
         if copy_solution is None:
