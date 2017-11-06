@@ -19,6 +19,7 @@ class HillClimb:
             mutant = mutation.run()[0]
             if mutant.get_score() >= self.solution.get_score():
                 self.solution = mutant
+                self.solution.set_movable_routers(mutant)
 
         return self.solution
 
