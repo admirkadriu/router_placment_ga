@@ -280,32 +280,35 @@ def computeGSMT(original_points):
 def get_steiner_points(original_points):
     Utils.log("Points to consider: ", len(original_points))
     graph_steiner_points = []
-    candidate_set = [0]
 
     last_length = None
-    while len(candidate_set) > 0:
+    candidate_set_len = 1
+    while candidate_set_len > 0:
         max_point = Point(0, 0)
-        candidate_set = [x for x in brute_points(original_points + graph_steiner_points) if
-                         delta_mst(original_points + graph_steiner_points, x, "G") > 0]
-        cost = 0
 
-        Utils.log("Brute points", len(candidate_set))
-        for pt in candidate_set:
-            delta_cost = delta_mst(original_points + graph_steiner_points, pt, "G")
+        candidate_set_len = 0
+        cost = 0
+        for point in brute_points(original_points + graph_steiner_points):
+            delta_cost = delta_mst(original_points + graph_steiner_points, point, "G")
+            if delta_cost > 0:
+                candidate_set_len += 1
             if delta_cost > cost:
-                max_point = pt
+                max_point = point
                 cost = delta_cost
 
         if max_point.x != 0 and max_point.y != 0:
             graph_steiner_points.append(max_point)
+            if max_point.deg <= 2:
+                Utils.log("Keq")
 
         for pt in graph_steiner_points:
             if pt.deg <= 2:
                 graph_steiner_points.remove(pt)
+                Utils.log("edhe ma Keq")
 
-        if last_length is None or len(candidate_set) != last_length:
-            last_length = len(candidate_set)
-        elif len(candidate_set) == last_length:
+        if last_length is None or candidate_set_len != last_length:
+            last_length = candidate_set_len
+        elif candidate_set_len == last_length:
             return graph_steiner_points
 
     Utils.log("Steiner points added: ", len(graph_steiner_points))
