@@ -22,13 +22,13 @@ class Solution:
         bulk_count = int(Building.infrastructure_budget / (Router.unit_cost * Building.back_bone_cost))
 
         routers = Router.n_at_random_target_clever(bulk_count)
-        routers.sort(key=lambda r: r.cell.get_distance_to_backbone())  # TODO: insert only when i is %2
+        routers.sort(key=lambda r: r.cell.get_distance_to_backbone())
         tg = time.time()
 
         can_add = True
         i = 0
         jump = 2
-        while can_add and i < len(routers):
+        while i < len(routers):
             router = routers[i]
             can_add = solution.add_router(router)
 
@@ -42,14 +42,6 @@ class Solution:
             Solution.estimated_connection_cost = (solution.connected_cells_count() * Building.back_bone_cost) \
                 # + (Router.unit_cost * solution.routers_count() * 0.0045)
 
-        # time_connect = time.time()
-        # score = solution.get_score()
-        # time_score = time.time()
-        # Utils.log("Solution Generated: ", solution.is_feasible(), "\n-Time: ", time_connect - t0)
-        # Utils.log("-Score: ", score, "; Time: ", time_score - time_connect)
-        # Utils.log("Random router generation time:", tg - t0)
-        # Utils.log("Get from redis time:", RedisProvider.get_seconds)
-        # sUtils.plot(solution)
         return solution
 
     def __init__(self):
@@ -134,6 +126,7 @@ class Solution:
         points = self.get_points_to_connect()
         lines = computeGMST(points)
         self.set_connected_cells_from_lines(lines)
+        Solution.estimated_connection_cost = (self.connected_cells_count() * Building.back_bone_cost)
 
         while not self.is_feasible():
             self.sort_by_covered_cells()
@@ -392,13 +385,13 @@ class Solution:
         for i in vertical_splits:
             for j in horizontal_splits:
                 routers = self.get_inside_rectangle(i, j, length, length)
-
                 for index, router in enumerate(routers):
                     point = Point(router.cell.i, router.cell.j)
                     routers[index] = point
                     points.append(point)
 
-                chunks_of_routers.append(routers)
+                if len(routers) > 2:
+                    chunks_of_routers.append(routers)
 
         Utils.log("Chunks: ", len(chunks_of_routers))
         ls = list()
