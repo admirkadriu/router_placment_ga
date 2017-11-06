@@ -7,7 +7,7 @@ reader = Reader()
 reader.read()
 
 if __name__ == '__main__':
-    solution = reader.read_solution("../wining_team_results/" + Config.input + ".out")
+    solution = reader.read_solution("wining_team_results/" + Config.input + ".out")
 
     print(solution.get_score())
     print(len(solution.routers))
