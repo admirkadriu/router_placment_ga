@@ -1,11 +1,13 @@
 import random
 import time
+from multiprocessing import Pool
 from uuid import uuid4
 
 from enums.CellType import CellType
 from models.building import Building
 from models.cell import Cell
 from models.router import Router
+from steiner_tree import Point, get_steiner_points
 from utils import Utils
 
 
@@ -125,10 +127,13 @@ class Solution:
 
         return
 
-    def fix(self):
+    def fix(self, lines=None):
         self.score_calculation_needed = True
         Solution.connect_cells_needed = True
-        self.reconnect_routers()
+        if lines is None:
+            self.reconnect_routers()
+        else:
+            self.set_connected_cells_from_lines(lines)
 
         while not self.is_feasible():
             self.sort_by_covered_cells()
@@ -364,6 +369,51 @@ class Solution:
                                                           4 * Router.radius, 4 * Router.radius)
         for router in routers_to_be_movable:
             self.routers_to_be_movable.add(router.cell.id)
+
+    def get_points_to_connect(self):
+        horizontal_splits = []
+        vertical_splits = []
+        length = (Router.radius * 15)
+
+        for i in range(Building.column_count - 1):
+            if i % length == 0 or i == Building.column_count - 1:
+                horizontal_splits.append(i)
+
+        for j in range(Building.row_count - 1):
+            if j % length == 0 or j == Building.row_count - 1:
+                vertical_splits.append(j)
+
+        points = list()
+        chunks_of_routers = []
+        for i in vertical_splits:
+            for j in horizontal_splits:
+                routers = self.get_inside_rectangle(i, j, length, length)
+
+                for index, router in enumerate(routers):
+                    point = Point(router.cell.i, router.cell.j)
+                    routers[index] = point
+                    points.append(point)
+
+                chunks_of_routers.append(routers)
+
+        with Pool(processes=4) as pool:
+            result = pool.map(get_steiner_points, chunks_of_routers)
+            for steiner_points in list(result):
+                points += steiner_points
+
+        points.append(Point(Building.back_bone_cell.i, Building.back_bone_cell.j))
+        return points
+
+    def set_connected_cells_from_lines(self, lines):
+        self.score_calculation_needed = True
+        self.connected_cells = {}
+        for line in lines:
+            cell1 = Cell.get(line.points[0].obj.x, line.points[0].obj.y)
+            cell2 = Cell.get(line.points[1].obj.x, line.points[1].obj.y)
+            cells_to_connect = cell1.get_path_to_cell(cell2)
+            self.connected_cells.update(cells_to_connect)
+            self.connected_cells[cell1.id] = cell1
+            self.connected_cells[cell2.id] = cell2
 
     @classmethod
     def get_from_dict(cls, solution_dict):

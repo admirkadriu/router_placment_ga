@@ -3,6 +3,7 @@ from enums.CellType import CellType
 from models.building import Building
 from models.cell import Cell
 from models.router import Router
+from models.solution import Solution
 
 
 class Reader:
@@ -37,3 +38,26 @@ class Reader:
 
         file.close()
         return
+
+    @staticmethod
+    def read_solution(file_path):
+        file = open(file_path, "r")
+        number_of_connected_cells = 0
+        solution = Solution()
+        for index, line in enumerate(file):
+            if index == 0:
+                number_of_connected_cells = int(line)
+            elif index <= number_of_connected_cells:
+                line_split = line.split()
+                cell = Cell.get(int(line_split[0]), int(line_split[1]))
+                solution.connected_cells[cell.id] = cell
+            elif index == number_of_connected_cells + 1:
+                number_of_routes = int(line)
+            else:
+                line_split = line.split()
+                cell = Cell.get(int(line_split[0]), int(line_split[1]))
+                router = Router(cell)
+                solution.routers.append(router)
+                solution.update_covered_cells(router.get_target_cells_covered(), True)
+
+        return solution
