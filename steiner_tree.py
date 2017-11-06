@@ -14,6 +14,7 @@ import math
 
 from enums.CellType import CellType
 from models.cell import Cell
+from models.router import Router
 from utils import Utils
 
 
@@ -225,6 +226,16 @@ def delta_mst(set_of_points, test_point, type):
     return cost1 - cost2
 
 
+def get_cost(set_of_points):
+    lines = kruskal_alg(set_of_points, "G")
+
+    cost1 = 0
+    for i in range(0, len(lines)):
+        cost1 += lines[i].w
+
+    return cost1
+
+
 def hanan_points(SetOfPoints):
     """HananPoints
     Produces a set of HananPoints of type Points
@@ -246,7 +257,7 @@ def brute_points(SetOfPoints):
     This could use some work...
     """
     if SetOfPoints != []:
-        SomePoints = []
+        some_points = set()
         xmax = (max(SetOfPoints, key=lambda x: x.x)).x
         xmin = (min(SetOfPoints, key=lambda x: x.x)).x
         ymax = (max(SetOfPoints, key=lambda x: x.y)).y
@@ -254,13 +265,18 @@ def brute_points(SetOfPoints):
 
         rangex = range(xmin, xmax)
         rangey = range(ymin, ymax)
-        for i in rangex[::10]:
-            for j in rangey[::10]:
+        for i in rangex[::Router.radius]:
+            for j in rangey[::Router.radius]:
                 if Cell.get(i, j).get_type() == CellType.TARGET.value:
-                    SomePoints.append(Point(i, j))
-        return SomePoints
+                    point = Point(i, j)
+                    some_points.add(get_point_id(point))
+        return some_points
     else:
-        return []
+        return set()
+
+
+def get_point_id(point):
+    return str(point.x) + "," + str(point.y)
 
 
 def computeGSMT(original_points):
@@ -280,36 +296,61 @@ def computeGSMT(original_points):
 def get_steiner_points(original_points):
     Utils.log("Points to consider: ", len(original_points))
     graph_steiner_points = []
-    candidate_set = [0]
 
-    last_length = None
-    while len(candidate_set) > 0:
-        max_point = Point(0, 0)
-        candidate_set = [x for x in brute_points(original_points + graph_steiner_points) if
-                         delta_mst(original_points + graph_steiner_points, x, "G") > 0]
-        cost = 0
+    candidate_set_len = 1
+    blacklisted_points = set()
+    initial_cost = None
+    while candidate_set_len > 0:
+        best_point = Point(0, 0)
 
-        Utils.log("Brute points", len(candidate_set))
-        for pt in candidate_set:
-            delta_cost = delta_mst(original_points + graph_steiner_points, pt, "G")
-            if delta_cost > cost:
-                max_point = pt
-                cost = delta_cost
+        candidate_set_len = 0
+        best_cost = 0
+        if initial_cost is None:
+            initial_cost = get_cost(original_points + graph_steiner_points)
 
-        if max_point.x != 0 and max_point.y != 0:
-            graph_steiner_points.append(max_point)
+        brute_points_set = brute_points(original_points + graph_steiner_points)
+        brute_points_set = brute_points_set.difference(blacklisted_points)
+        if len(blacklisted_points) > 0:
+            print(len(blacklisted_points))
+        for key in brute_points_set:
+            i, j = Utils.get_position_from_id(key)
+            point = Point(i, j)
+            after_cost = get_cost(original_points + graph_steiner_points + [point])
+            delta_cost = initial_cost - after_cost
+            if (get_point_id(point)) in blacklisted_points:
+                continue
 
-        for pt in graph_steiner_points:
-            if pt.deg <= 2:
-                graph_steiner_points.remove(pt)
+            if delta_cost > 0:
+                candidate_set_len += 1
+            elif delta_cost < -Router.radius:
+                blacklisted_points.add(key)
 
-        if last_length is None or len(candidate_set) != last_length:
-            last_length = len(candidate_set)
-        elif len(candidate_set) == last_length:
-            return graph_steiner_points
+            if delta_cost > best_cost:
+                best_point = point
+                best_cost = delta_cost
+
+        if best_point.x != 0 and best_point.y != 0:
+            graph_steiner_points.append(best_point)
+            initial_cost = None
+
+        for point in graph_steiner_points:
+            if point.deg <= 2:
+                graph_steiner_points.remove(point)
+                blacklisted_points.add(get_point_id(point))
+                initial_cost = None
+
+        Utils.log("steiner len:", len(graph_steiner_points), candidate_set_len)
 
     Utils.log("Steiner points added: ", len(graph_steiner_points))
-    return graph_steiner_points
+
+    return points_to_list(graph_steiner_points)
+
+def points_to_list(points):
+    ls = []
+    for point in points:
+        ls.append([point.x, point.y])
+    return ls
+
 
 
 def computeGMST(original_points):

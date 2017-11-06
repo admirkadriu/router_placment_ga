@@ -7,7 +7,7 @@ from enums.CellType import CellType
 from models.building import Building
 from models.cell import Cell
 from models.router import Router
-from steiner_tree import Point, get_steiner_points
+from steiner_tree import Point, get_steiner_points, computeGMST
 from utils import Utils
 
 
@@ -127,13 +127,13 @@ class Solution:
 
         return
 
-    def fix(self, lines=None):
+    def fix(self):
         self.score_calculation_needed = True
         Solution.connect_cells_needed = True
-        if lines is None:
-            self.reconnect_routers()
-        else:
-            self.set_connected_cells_from_lines(lines)
+
+        points = self.get_points_to_connect()
+        lines = computeGMST(points)
+        self.set_connected_cells_from_lines(lines)
 
         while not self.is_feasible():
             self.sort_by_covered_cells()
@@ -167,7 +167,7 @@ class Solution:
 
         if (self.get_cost() + cost_to_add) <= self.get_available_budget():
             self.routers.append(router)
-            self.routers_to_be_movable.add(router.cell.id)
+            self.movable_routers.add(router.cell.id)
             self.update_covered_cells(router.get_target_cells_covered(), True)
             self.connected_cells.update(cells_to_connect)
             self.score_calculation_needed = True
@@ -180,7 +180,7 @@ class Solution:
         for i, r in enumerate(self.routers):
             if r.cell.id == router.cell.id:
                 self.update_covered_cells(r.get_target_cells_covered(), False)
-                self.routers_to_be_unmovable.add(r.cell.id)
+                self.movable_routers.discard(r.cell.id)
                 del self.routers[i]
                 if Solution.connect_cells_needed:
                     if r.cell.id != Building.back_bone_cell.id:
@@ -360,13 +360,17 @@ class Solution:
 
         self.movable_routers = self.movable_routers.union(copy_solution.routers_to_be_movable)
         self.movable_routers = self.movable_routers.difference(copy_solution.routers_to_be_unmovable)
+
         copy_solution.routers_to_be_movable = set()
         copy_solution.routers_to_be_unmovable = set()
+        self.routers_to_be_movable = set()
+        self.routers_to_be_unmovable = set()
 
     def set_routers_to_be_movable(self, cell):
         routers_to_be_movable = self.get_inside_rectangle(cell.i - (2 * Router.radius),
                                                           cell.j - (2 * Router.radius),
                                                           4 * Router.radius, 4 * Router.radius)
+
         for router in routers_to_be_movable:
             self.routers_to_be_movable.add(router.cell.id)
 
@@ -396,10 +400,15 @@ class Solution:
 
                 chunks_of_routers.append(routers)
 
-        with Pool(processes=4) as pool:
+        Utils.log("Chunks: ", len(chunks_of_routers))
+        ls = list()
+        with Pool(processes=3) as pool:
             result = pool.map(get_steiner_points, chunks_of_routers)
             for steiner_points in list(result):
-                points += steiner_points
+                ls += steiner_points
+
+        for point in ls:
+            points.append(Point(point[0], point[1]))
 
         points.append(Point(Building.back_bone_cell.i, Building.back_bone_cell.j))
         return points
