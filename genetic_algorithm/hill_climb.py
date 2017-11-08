@@ -1,5 +1,6 @@
 import time
 
+from enums.mutation_type import MutationType
 from genetic_algorithm.mutation import Mutation
 from redis_provider import RedisProvider
 from utils import Utils
@@ -15,11 +16,12 @@ class HillClimb:
 
     def run_by_iterations(self):
         for i in range(0, HillClimb.t):
-            mutation = Mutation([self.solution].copy())
+            mutation = Mutation([self.solution].copy(), True)
             mutant = mutation.run()[0]
             if mutant.get_score() >= self.solution.get_score():
                 self.solution = mutant
-                self.solution.set_movable_routers(mutant)
+                self.solution.refresh_movable_routers(mutant)
+            self.solution.refresh_movable_routers(mutant)
 
         return self.solution
 
@@ -27,7 +29,7 @@ class HillClimb:
         timeout = time.time() + 60 * self.minutes
         i = 1
         while time.time() < timeout:
-            mutation = Mutation([self.solution])
+            mutation = Mutation([self.solution], True)
             mutant = mutation.run()[0]
             if mutant.get_score() >= self.solution.get_score():
                 if mutant.get_score() > self.solution.get_score() and i >= HillClimb.t:
@@ -36,7 +38,9 @@ class HillClimb:
                     Utils.log("Best Updated hc: ", mutant.score)
 
                 self.solution = mutant
-                self.solution.set_movable_routers(mutant)
+            else:
+                self.solution.refresh_movable_routers(mutant)
+
             i += 1
 
         return self.solution

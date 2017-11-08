@@ -3,7 +3,7 @@ import time
 from multiprocessing import Pool
 from uuid import uuid4
 
-from enums.CellType import CellType
+from enums.cell_type import CellType
 from models.building import Building
 from models.cell import Cell
 from models.router import Router
@@ -39,23 +39,22 @@ class Solution:
                 jump = jump * 2
 
         if Solution.connect_cells_needed and Solution.estimated_connection_cost == 0:
-            Solution.estimated_connection_cost = (solution.connected_cells_count() * Building.back_bone_cost) \
-                # + (Router.unit_cost * solution.routers_count() * 0.0045)
+            Solution.estimated_connection_cost = (solution.connected_cells_count() * Building.back_bone_cost) * 0.97
 
         return solution
 
     def __init__(self):
         self.id = uuid4()
         self.routers = []
+        self.routers_set = set()
         self.connected_cells = {}
         self.covered_cells = {}
         self.uncovered_cells = set(Building.get_target_cells_set())
         self.score = None
         self.score_calculation_needed = True
         self.movable_routers = set()
-        self.routers_to_be_movable = set()
         self.routers_to_be_unmovable = set()
-        self.clever_shift_distance = 2
+        self.clever_shift_distance = 5
 
     def connected_cells_count(self):
         return len(self.connected_cells)
@@ -103,11 +102,16 @@ class Solution:
         self.score_calculation_needed = True
 
         self.routers = []
+        self.routers_set = set()
         self.covered_cells = {}
         self.connected_cells = {}
+        self.movable_routers = set()
+        self.routers_to_be_unmovable = set()
 
         for router in r_dict.values():
             self.routers.append(router)
+            self.routers_set.add(router.cell.id)
+            self.movable_routers.add(router.cell.id)
             self.update_covered_cells(router.get_target_cells_covered(), True)
 
         if self.connect_cells_needed:
@@ -160,6 +164,7 @@ class Solution:
 
         if (self.get_cost() + cost_to_add) <= self.get_available_budget():
             self.routers.append(router)
+            self.routers_set.add(router.cell.id)
             self.movable_routers.add(router.cell.id)
             self.update_covered_cells(router.get_target_cells_covered(), True)
             self.connected_cells.update(cells_to_connect)
@@ -174,6 +179,7 @@ class Solution:
             if r.cell.id == router.cell.id:
                 self.update_covered_cells(r.get_target_cells_covered(), False)
                 self.movable_routers.discard(r.cell.id)
+                self.routers_set.discard(r.cell.id)
                 del self.routers[i]
                 if Solution.connect_cells_needed:
                     if r.cell.id != Building.back_bone_cell.id:
@@ -316,6 +322,7 @@ class Solution:
         new_solution = Solution()
         new_solution.id = uuid4()
         new_solution.routers = [] + self.routers
+        new_solution.routers_set = set(self.routers_set)
         new_solution.connected_cells = dict(self.connected_cells)
         new_solution.score = self.score
         new_solution.recalculate_score = self.score_calculation_needed
@@ -343,29 +350,27 @@ class Solution:
 
     def reset_movable_routers(self):
         self.movable_routers = set()
-        for router in self.movable_routers:
+        for router in self.routers:
             self.movable_routers.add(router.cell.id)
-        self.clever_shift_distance += 2
 
-    def set_movable_routers(self, copy_solution=None):
+        self.clever_shift_distance += 2
+        self.routers_to_be_unmovable = set()
+
+    def refresh_movable_routers(self, copy_solution=None):
         if copy_solution is None:
             copy_solution = self
 
-        self.movable_routers = self.movable_routers.union(copy_solution.routers_to_be_movable)
         self.movable_routers = self.movable_routers.difference(copy_solution.routers_to_be_unmovable)
-
-        copy_solution.routers_to_be_movable = set()
         copy_solution.routers_to_be_unmovable = set()
-        self.routers_to_be_movable = set()
         self.routers_to_be_unmovable = set()
 
-    def set_routers_to_be_movable(self, cell):
+    def make_near_routers_movable(self, cell):
         routers_to_be_movable = self.get_inside_rectangle(cell.i - (2 * Router.radius),
                                                           cell.j - (2 * Router.radius),
                                                           4 * Router.radius, 4 * Router.radius)
 
         for router in routers_to_be_movable:
-            self.routers_to_be_movable.add(router.cell.id)
+            self.movable_routers.add(router.cell.id)
 
     def get_points_to_connect(self):
         horizontal_splits = []

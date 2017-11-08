@@ -3,7 +3,7 @@ import random
 import numpy as np
 import scipy.spatial as spatial
 
-from enums.CellType import CellType
+from enums.cell_type import CellType
 from models.building import Building
 from models.cell import Cell
 from redis_provider import RedisProvider
