@@ -1,6 +1,6 @@
 import math
 
-from enums.CellType import CellType
+from enums.cell_type import CellType
 from models.building import Building
 
 class Cell:

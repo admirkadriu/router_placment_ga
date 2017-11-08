@@ -10,9 +10,10 @@ if __name__ == '__main__':
     Utils.log("Pre-processing..")
     Solution.connect_cells_needed = True
     solution = Solution.generate_feasible()
-    solution.reset_movable_routers()
+    # solution.fix()
     Solution.connect_cells_needed = False
     Utils.log("Pre-processing ended..")
+    Utils.log("Numb of routers", len(solution.routers))
     # print(solution.get_score())
     #
     # solution.remove_router(solution.routers[0])
@@ -22,7 +23,7 @@ if __name__ == '__main__':
     solution.connected_cells = {}
     solution.score_calculation_needed = True
 
-    HillClimb.minutes = 15
+    HillClimb.minutes = 3
     hill_climb = HillClimb(solution)
     solution = hill_climb.run_by_time()
     solution.fix()

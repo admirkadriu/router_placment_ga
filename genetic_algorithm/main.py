@@ -29,7 +29,6 @@ class GeneticAlgorithm:
 
     def run(self, populate=None):
         t = 0
-        best_score = 0
         if populate is None:
             populate = self.initialize()
         self.populate_update(populate)
@@ -58,7 +57,7 @@ class GeneticAlgorithm:
 
         best_individual = self.run()[0]
 
-        HillClimb.minutes *= 0.7
+        HillClimb.minutes *= 0.85
         hill_climb = HillClimb(best_individual)
         best_individual = hill_climb.run_by_time()
 
@@ -69,8 +68,8 @@ class GeneticAlgorithm:
         for i, record in enumerate(self.score_history):
             self.score_history[i][1] -= difference
 
-        HillClimb.minutes /= 0.7
-        HillClimb.minutes *= 0.3
+        HillClimb.minutes /= 0.85
+        HillClimb.minutes *= 0.15
         hill_climb = HillClimb(best_individual)
         best_individual = hill_climb.run_by_time()
 
@@ -139,16 +138,36 @@ class GeneticAlgorithm:
         return mutants
 
     def populate_update(self, populate, mutated_children=[]):
+        mutated_children = self.get_only_diverse_individuals(populate, mutated_children)
+
         new_population = populate + mutated_children
-        # new_population = list({i.id: i for i in new_population}.values())  # remove duplicates
         new_population.sort(key=lambda s: s.get_score(), reverse=True)
+
         new_population = new_population[:self.pop_size]
+
         if populate[0].score > self.best_score:
             self.best_score = populate[0].score
             self.score_history.append([time.time(), self.best_score])
             Utils.log("Best Updated: ", populate[0].score)
 
         return new_population
+
+    def get_only_diverse_individuals(self, populate, mutated_children):
+        children_to_get = Utils.list_to_dict(mutated_children, "id")
+        for children in mutated_children:
+            for person in populate:
+                if children.id == person.id:
+                    children_to_get.pop(children.id)
+                    break
+
+                if abs(children.get_score() - person.get_score()) < 10:
+                    common = len(children.routers_set.intersection(person.routers_set))
+                    if common / len(children.routers_set) > 0.95:
+                        children_to_get.pop(children.id)
+                        Utils.log("Same solution")
+                        break
+
+        return list(children_to_get.values())
 
     def tournament_selection(self, populate, tournament_size, check_if_accepted):
         best = random.choice(populate)
@@ -160,15 +179,16 @@ class GeneticAlgorithm:
         return best
 
     def hill_climb(self, mutated_children):
-        if len(mutated_children) > 1 and GeneticAlgorithm.multi_process:
-            func = partial(self.do_hill_climb, Solution.estimated_connection_cost, HillClimb.t, Mutation.radius)
-            with Pool(processes=2) as pool:
-                result = pool.map(func, mutated_children)
-                mutated_children = list(result)
-        else:
-            for index, child in enumerate(mutated_children):
-                hill_climb = HillClimb(child)
-                mutated_children[index] = hill_climb.run_by_iterations()
+        if HillClimb.t != 0:
+            if len(mutated_children) > 1 and GeneticAlgorithm.multi_process:
+                func = partial(self.do_hill_climb, Solution.estimated_connection_cost, HillClimb.t, Mutation.radius)
+                with Pool(processes=2) as pool:
+                    result = pool.map(func, mutated_children)
+                    mutated_children = list(result)
+            else:
+                for index, child in enumerate(mutated_children):
+                    hill_climb = HillClimb(child)
+                    mutated_children[index] = hill_climb.run_by_iterations()
 
         return mutated_children
 

@@ -1,5 +1,5 @@
 from config import Config
-from enums.CellType import CellType
+from enums.cell_type import CellType
 from models.building import Building
 from models.cell import Cell
 from models.router import Router

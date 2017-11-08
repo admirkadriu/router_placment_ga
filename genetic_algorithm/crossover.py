@@ -8,8 +8,8 @@ from utils import Utils
 class Crossover:
     def __init__(self, parents):
         self.parents = parents
-        self.defaultHeight = random.randint(int(Building.row_count / 40), int(Building.row_count / 10))
-        self.defaultWidth = random.randint(int(Building.column_count / 40), int(Building.column_count / 10))
+        self.defaultHeight = random.randint(int(Building.row_count / 40), int(Building.row_count / 5))
+        self.defaultWidth = random.randint(int(Building.column_count / 40), int(Building.column_count / 5))
         self.couples = []
         self.make_couples()
 
@@ -38,8 +38,9 @@ class Crossover:
         if width is None:
             width = self.defaultWidth
 
-        i = random.randint(0, Building.row_count - height)
-        j = random.randint(0, Building.column_count - width)
+        cell = random.choice(Building.target_cells)
+        i = cell.i - height
+        j = cell.j - width
 
         for couple in self.couples:
             p1, p2 = couple
@@ -53,10 +54,9 @@ class Crossover:
 
             if should_switch_routers:
                 child1 = Solution()
-                if len(inside_rp2) / len(outside_rp2) > 0.02 and not Solution.connect_cells_needed:
+                if not Solution.connect_cells_needed:
                     child1.set_routers(inside_rp1 + outside_rp2)
                     children.append(child1)
-                    #Utils.log("New child", child1.get_score())
                 else:
                     child1 = p2.copy()
                     for router in inside_rp2:
@@ -66,13 +66,11 @@ class Crossover:
                         child1.add_router(router)
 
                     children.append(child1)
-                    #Utils.log("child1", child1.get_score())
 
-                if len(inside_rp1) / len(outside_rp1) > 0.02 and not Solution.connect_cells_needed:
+                if not Solution.connect_cells_needed:
                     child2 = Solution()
                     child2.set_routers(inside_rp2 + outside_rp1)
                     children.append(child2)
-                    #Utils.log("New child", child2.get_score())
                 else:
                     child2 = p1.copy()
                     for router in inside_rp1:
@@ -82,7 +80,6 @@ class Crossover:
                         child2.add_router(router)
 
                     children.append(child2)
-                    #Utils.log("child2", child2.get_score())
         return children
 
     def mid_point(self):

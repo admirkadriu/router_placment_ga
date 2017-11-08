@@ -12,7 +12,7 @@ Note to reader: Sorry for the lack of comments and organization. See above.
 
 import math
 
-from enums.CellType import CellType
+from enums.cell_type import CellType
 from models.cell import Cell
 from models.router import Router
 from utils import Utils
@@ -257,6 +257,10 @@ def brute_points(SetOfPoints):
     This could use some work...
     """
     if SetOfPoints != []:
+        length = Router.radius
+        if len(SetOfPoints) > 65:
+            length = 10
+
         some_points = set()
         xmax = (max(SetOfPoints, key=lambda x: x.x)).x
         xmin = (min(SetOfPoints, key=lambda x: x.x)).x
@@ -265,8 +269,8 @@ def brute_points(SetOfPoints):
 
         rangex = range(xmin, xmax)
         rangey = range(ymin, ymax)
-        for i in rangex[::Router.radius]:
-            for j in rangey[::Router.radius]:
+        for i in rangex[::length]:
+            for j in rangey[::length]:
                 if Cell.get(i, j).get_type() == CellType.TARGET.value:
                     point = Point(i, j)
                     some_points.add(get_point_id(point))
