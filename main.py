@@ -38,7 +38,7 @@ def execute_alg(run_params):
 
     string_results = Utils.list_to_string(discrete_score_history)
     Utils.print_to_csv("experiments/" + Config.input + "/plots", "run_" + str(run_params['id']), string_results)
-
+    Utils.print_to_csv('experiments/' + Config.input + '/outputs', "run_" + str(run_params['id']), best.to_string())
 
 if __name__ == '__main__':
     GeneticAlgorithm.multi_process = True

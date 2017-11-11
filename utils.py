@@ -96,6 +96,8 @@ class Utils:
             for cell in cell_to_show.get_neighbor_cells():
                 matrix[cell.i, cell.j] = 2
 
+        matrix[0, 0] = 8
+
         fig = plt.figure()
 
         ax = plt.Axes(fig, (0, 0, 1, 1))
@@ -172,4 +174,3 @@ class Utils:
     @staticmethod
     def get_position_from_id(cell_id):
         return [int(cell_id.split(",")[0]), int(cell_id.split(",")[1])]
-

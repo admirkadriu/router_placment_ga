@@ -422,6 +422,17 @@ class Solution:
             self.connected_cells[cell1.id] = cell1
             self.connected_cells[cell2.id] = cell2
 
+    def to_string(self):
+        string = str(len(self.connected_cells)) + '\n'
+        for cell in self.connected_cells.values():
+            string += str(cell.i) + ' ' + str(cell.j) + '\n'
+
+        string += str(len(self.routers)) + '\n'
+        for router in self.routers:
+            string += str(router.cell.i) + ' ' + str(router.cell.i) + '\n'
+
+        return string
+
     @classmethod
     def get_from_dict(cls, solution_dict):
         solution = cls()
