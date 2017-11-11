@@ -192,7 +192,7 @@ class GeneticAlgorithm:
         if HillClimb.t != 0:
             if len(mutated_children) > 1 and GeneticAlgorithm.multi_process:
                 func = partial(self.do_hill_climb, Solution.estimated_connection_cost, HillClimb.t, Mutation.radius)
-                with Pool(processes=2) as pool:
+                with Pool(processes=len(mutated_children)) as pool:
                     result = pool.map(func, mutated_children)
                     mutated_children = list(result)
             else:
