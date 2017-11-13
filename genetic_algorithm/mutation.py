@@ -106,9 +106,9 @@ class Mutation:
                     self.random_move()
                 else:
                     self.clever_shift()
-            elif random_int < 85:
+            elif random_int < 80:
                 self.random_move()
-            elif random_int < 93:
+            elif random_int < 95:
                 self.remove()
             elif random_int < 100:
                 self.add()
