@@ -35,7 +35,7 @@ class Mutation:
 
         self.clone.remove_router(random_router)
 
-        neighbor_target_cells = random_router.cell.get_neighbor_target_cells(self.clone.clever_shift_distance)
+        neighbor_target_cells = random_router.cell.get_neighbor_target_cells(Mutation.radius)
         random.shuffle(neighbor_target_cells)
         for cell in neighbor_target_cells:
             router_to_add = Router(cell)

@@ -54,7 +54,6 @@ class Solution:
         self.score_calculation_needed = True
         self.movable_routers = set()
         self.routers_to_be_unmovable = set()
-        self.clever_shift_distance = 5
 
     def connected_cells_count(self):
         return len(self.connected_cells)
@@ -329,7 +328,6 @@ class Solution:
         new_solution.covered_cells = dict(self.covered_cells)
         new_solution.uncovered_cells = set(self.uncovered_cells)
         new_solution.movable_routers = set(self.movable_routers)
-        new_solution.clever_shift_distance = self.clever_shift_distance
         return new_solution
 
     def update_covered_cells(self, covered_cells, added):
