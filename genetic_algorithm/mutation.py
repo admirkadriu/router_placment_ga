@@ -35,7 +35,7 @@ class Mutation:
 
         self.clone.remove_router(random_router)
 
-        neighbor_target_cells = random_router.cell.get_neighbor_target_cells(self.clone.clever_shift_distance)
+        neighbor_target_cells = random_router.cell.get_neighbor_target_cells(Mutation.radius)
         random.shuffle(neighbor_target_cells)
         for cell in neighbor_target_cells:
             router_to_add = Router(cell)
@@ -106,12 +106,12 @@ class Mutation:
                     self.random_move()
                 else:
                     self.clever_shift()
-            elif random_int < 85:
+            elif random_int < 80:
                 self.random_move()
-            elif random_int < 94:
-                self.add()
-            elif random_int < 100:
+            elif random_int < 95:
                 self.remove()
+            elif random_int < 100:
+                self.add()
 
             if not self.is_hill_climb:
                 self.clone.refresh_movable_routers()

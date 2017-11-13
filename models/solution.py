@@ -54,7 +54,6 @@ class Solution:
         self.score_calculation_needed = True
         self.movable_routers = set()
         self.routers_to_be_unmovable = set()
-        self.clever_shift_distance = 5
 
     def connected_cells_count(self):
         return len(self.connected_cells)
@@ -329,7 +328,6 @@ class Solution:
         new_solution.covered_cells = dict(self.covered_cells)
         new_solution.uncovered_cells = set(self.uncovered_cells)
         new_solution.movable_routers = set(self.movable_routers)
-        new_solution.clever_shift_distance = self.clever_shift_distance
         return new_solution
 
     def update_covered_cells(self, covered_cells, added):
@@ -400,7 +398,7 @@ class Solution:
 
         Utils.log("Chunks: ", len(chunks_of_routers))
         ls = list()
-        with Pool(processes=3) as pool:
+        with Pool(processes=6) as pool:
             result = pool.map(get_steiner_points, chunks_of_routers)
             for steiner_points in list(result):
                 ls += steiner_points
@@ -421,6 +419,17 @@ class Solution:
             self.connected_cells.update(cells_to_connect)
             self.connected_cells[cell1.id] = cell1
             self.connected_cells[cell2.id] = cell2
+
+    def to_string(self):
+        string = str(len(self.connected_cells)) + '\n'
+        for cell in self.connected_cells.values():
+            string += str(cell.i) + ' ' + str(cell.j) + '\n'
+
+        string += str(len(self.routers)) + '\n'
+        for router in self.routers:
+            string += str(router.cell.i) + ' ' + str(router.cell.i) + '\n'
+
+        return string
 
     @classmethod
     def get_from_dict(cls, solution_dict):

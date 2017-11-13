@@ -24,7 +24,7 @@ def execute_alg(run_params):
     Cell.cells_map = {}
 
     Utils.log("Genetic algorithm started..")
-    alg = GeneticAlgorithm(run_params['p_s'], run_params['t_s'], run_params['n_ch'], run_params['time'])
+    alg = GeneticAlgorithm(run_params['p_s'], run_params['t_s'], run_params['n_ch'], automated_runs.run_time)
     best = alg.perform()
     run_params['score'] = best.get_score()
 
@@ -38,9 +38,10 @@ def execute_alg(run_params):
 
     string_results = Utils.list_to_string(discrete_score_history)
     Utils.print_to_csv("experiments/" + Config.input + "/plots", "run_" + str(run_params['id']), string_results)
-
+    Utils.print_to_csv('experiments/' + Config.input + '/outputs', "run_" + str(run_params['id']), best.to_string())
 
 if __name__ == '__main__':
     GeneticAlgorithm.multi_process = True
-    for run_params in automated_runs.runs_params_1:
-        execute_alg(run_params)
+    for i in range(automated_runs.number_of_runs):
+        for run_params in automated_runs.run_params:
+            execute_alg(run_params)

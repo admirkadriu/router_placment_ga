@@ -61,17 +61,27 @@ class GeneticAlgorithm:
         hill_climb = HillClimb(best_individual)
         best_individual = hill_climb.run_by_time()
 
+        self.score_history += hill_climb.score_history
+
+        time_before_fix = time.time()
         score_before_fix = best_individual.get_score()
+
         best_individual.fix()
-        difference = score_before_fix - best_individual.get_score()
+
+        score_difference = score_before_fix - best_individual.get_score()
 
         for i, record in enumerate(self.score_history):
-            self.score_history[i][1] -= difference
+            self.score_history[i][1] -= score_difference
+
+        time_difference = time.time() - time_before_fix
 
         HillClimb.minutes /= 0.85
         HillClimb.minutes *= 0.15
         hill_climb = HillClimb(best_individual)
         best_individual = hill_climb.run_by_time()
+
+        for item in hill_climb.score_history:
+            item[0] -= time_difference
 
         self.score_history += hill_climb.score_history
 
@@ -182,7 +192,7 @@ class GeneticAlgorithm:
         if HillClimb.t != 0:
             if len(mutated_children) > 1 and GeneticAlgorithm.multi_process:
                 func = partial(self.do_hill_climb, Solution.estimated_connection_cost, HillClimb.t, Mutation.radius)
-                with Pool(processes=2) as pool:
+                with Pool(processes=len(mutated_children)) as pool:
                     result = pool.map(func, mutated_children)
                     mutated_children = list(result)
             else:
