@@ -42,5 +42,6 @@ def execute_alg(run_params):
 
 if __name__ == '__main__':
     GeneticAlgorithm.multi_process = True
-    for run_params in automated_runs.run_params:
-        execute_alg(run_params)
+    for i in range(automated_runs.number_of_runs):
+        for run_params in automated_runs.run_params:
+            execute_alg(run_params)
