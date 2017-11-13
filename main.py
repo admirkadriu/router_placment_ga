@@ -24,7 +24,7 @@ def execute_alg(run_params):
     Cell.cells_map = {}
 
     Utils.log("Genetic algorithm started..")
-    alg = GeneticAlgorithm(run_params['p_s'], run_params['t_s'], run_params['n_ch'], run_params['time'])
+    alg = GeneticAlgorithm(run_params['p_s'], run_params['t_s'], run_params['n_ch'], automated_runs.run_time)
     best = alg.perform()
     run_params['score'] = best.get_score()
 
