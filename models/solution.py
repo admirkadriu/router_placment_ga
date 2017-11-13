@@ -398,7 +398,7 @@ class Solution:
 
         Utils.log("Chunks: ", len(chunks_of_routers))
         ls = list()
-        with Pool(processes=3) as pool:
+        with Pool(processes=6) as pool:
             result = pool.map(get_steiner_points, chunks_of_routers)
             for steiner_points in list(result):
                 ls += steiner_points

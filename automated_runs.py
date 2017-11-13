@@ -10,7 +10,7 @@ tests = [
         'n_ch': 2
     }
 ]
-run_time = 35
+run_time = 40
 number_of_runs = 3
 
 run_params = [
