@@ -108,10 +108,10 @@ class Mutation:
                     self.clever_shift()
             elif random_int < 85:
                 self.random_move()
-            elif random_int < 94:
-                self.add()
-            elif random_int < 100:
+            elif random_int < 93:
                 self.remove()
+            elif random_int < 100:
+                self.add()
 
             if not self.is_hill_climb:
                 self.clone.refresh_movable_routers()
