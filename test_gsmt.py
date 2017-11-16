@@ -11,6 +11,7 @@ if __name__ == '__main__':
 
     print(solution.get_score())
     print(len(solution.routers))
+    print(len(solution.covered_cells))
 
     # points = solution.get_points_to_connect()
     #

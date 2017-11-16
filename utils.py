@@ -23,8 +23,9 @@ class Utils:
 
     @staticmethod
     def log(*args):
-        args = args + (time.strftime("%H:%M:%S"),)
-        Utils.logger.info(args)
+        # args = args + (time.strftime("%H:%M:%S"),)
+        # Utils.logger.info(args)
+        pass
 
     @staticmethod
     def chunk_list(array, num):

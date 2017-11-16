@@ -4,6 +4,6 @@ class Config:
     redis_db = 11
     redis_password = None
 
-    input = "rue_de_londres"
+    input = "charleston_road"
     file_name = "input/" + input + ".in"
     file_path = '' + file_name

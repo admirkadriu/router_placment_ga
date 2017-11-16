@@ -10,7 +10,7 @@ tests = [
         'n_ch': 2
     }
 ]
-run_time = 40
+run_time = 30
 number_of_runs = 3
 
 run_params = [
@@ -118,7 +118,7 @@ run_params = [
         'p_c': 0.5,
         'p_m': 0.5,
         't_h': 150,
-        'r': 8,
+        'r': 3,
         'n_ch': 2
     }, {
         'p_s': 100,
@@ -126,7 +126,7 @@ run_params = [
         'p_c': 0.5,
         'p_m': 0.5,
         't_h': 150,
-        'r': 11,
+        'r': 10,
         'n_ch': 2
     },  # --------------- hill climb
     {
