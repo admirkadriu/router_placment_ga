@@ -39,8 +39,8 @@ class Crossover:
             width = self.defaultWidth
 
         cell = random.choice(Building.target_cells)
-        i = cell.i - height
-        j = cell.j - width
+        i = cell.i - height/2
+        j = cell.j - width/2
 
         for couple in self.couples:
             p1, p2 = couple

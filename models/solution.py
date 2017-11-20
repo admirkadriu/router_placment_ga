@@ -17,20 +17,17 @@ class Solution:
 
     @classmethod
     def generate_feasible(cls):
-        t0 = time.time()
         solution = cls()
         bulk_count = int(Building.infrastructure_budget / (Router.unit_cost * Building.back_bone_cost))
 
         routers = Router.n_at_random_target_clever(bulk_count)
         routers.sort(key=lambda r: r.cell.get_distance_to_backbone())
-        tg = time.time()
 
-        can_add = True
         i = 0
         jump = 2
         while i < len(routers):
             router = routers[i]
-            can_add = solution.add_router(router)
+            solution.add_router(router)
 
             i += jump
 
@@ -48,7 +45,7 @@ class Solution:
         self.routers = []
         self.routers_set = set()
         self.connected_cells = {}
-        self.covered_cells = {}
+        self.uu = {}
         self.uncovered_cells = set(Building.get_target_cells_set())
         self.score = None
         self.score_calculation_needed = True
@@ -351,7 +348,6 @@ class Solution:
         for router in self.routers:
             self.movable_routers.add(router.cell.id)
 
-        self.clever_shift_distance += 2
         self.routers_to_be_unmovable = set()
 
     def refresh_movable_routers(self, copy_solution=None):

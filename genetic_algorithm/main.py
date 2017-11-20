@@ -28,7 +28,6 @@ class GeneticAlgorithm:
         self.best_score = 0
 
     def run(self, populate=None):
-        t = 0
         if populate is None:
             populate = self.initialize()
         self.populate_update(populate)
@@ -41,9 +40,6 @@ class GeneticAlgorithm:
             mutated_children = self.hill_climb(mutated_children)
             populate = self.populate_update(populate, mutated_children)
 
-            t += 1
-
-        populate.sort(key=lambda s: s.get_score(), reverse=True)
         return populate
 
     def perform(self):
@@ -148,7 +144,7 @@ class GeneticAlgorithm:
         return mutants
 
     def populate_update(self, populate, mutated_children=[]):
-        mutated_children = self.get_only_diverse_individuals(populate, mutated_children)
+        populate = self.get_only_diverse_individuals(populate, mutated_children)
 
         new_population = populate + mutated_children
         new_population.sort(key=lambda s: s.get_score(), reverse=True)
@@ -163,25 +159,25 @@ class GeneticAlgorithm:
         return new_population
 
     def get_only_diverse_individuals(self, populate, mutated_children):
-        children_to_get = Utils.list_to_dict(mutated_children, "id")
+        populate_to_return = Utils.list_to_dict(populate, "id")
         for children in mutated_children:
             for person in populate:
                 if children.id == person.id:
-                    children_to_get.pop(children.id)
+                    populate_to_return.pop(person.id)
                     break
 
                 if abs(children.get_score() - person.get_score()) < 10:
                     common = len(children.routers_set.intersection(person.routers_set))
                     if common / len(children.routers_set) > 0.95:
-                        children_to_get.pop(children.id)
+                        populate_to_return.pop(person.id)
                         Utils.log("Same solution")
                         break
 
-        return list(children_to_get.values())
+        return list(populate_to_return.values())
 
     def tournament_selection(self, populate, tournament_size, check_if_accepted):
         best = random.choice(populate)
-        for i in range(1, tournament_size):
+        for i in range(0, tournament_size):
             solution = random.choice(populate)
             if check_if_accepted(solution.get_score(), best.get_score()):
                 best = solution

@@ -17,7 +17,6 @@ class Mutation:
         self.mutation_type = None
 
     def shift(self):
-        self.mutation_type = MutationType.SHIFT.value
         random_router = random.choice(self.clone.routers)
         self.clone.remove_router(random_router)
         neighbor_cell = random.choice(random_router.cell.get_neighbor_target_cells(Mutation.radius))
@@ -25,7 +24,6 @@ class Mutation:
         self.clone.make_near_routers_movable(neighbor_cell)
 
     def clever_shift(self):
-        self.mutation_type = MutationType.CLEVER_SHIFT.value
         score_before = self.clone.get_score()
         cell_with_same_score = None
 
@@ -44,7 +42,6 @@ class Mutation:
             if self.clone.get_score() > score_before:
                 self.clone.make_near_routers_movable(cell)
                 self.clone.make_near_routers_movable(random_router.cell)
-                # Utils.log("Found better")
                 return
             elif added:
                 if self.clone.get_score() == score_before:
@@ -60,7 +57,6 @@ class Mutation:
             self.clone.routers_to_be_unmovable.add(cell_id)
 
     def random_move(self):
-        self.mutation_type = MutationType.RANDOM_MOVE.value
         score_before = self.clone.get_score()
         random_router = random.choice(self.clone.routers)
 
@@ -80,7 +76,6 @@ class Mutation:
             self.clone.make_near_routers_movable(cell)
 
     def add(self):
-        self.mutation_type = MutationType.ADD_ROUTER.value
         if len(self.clone.uncovered_cells) > 0:
             cell_id = random.sample(self.clone.uncovered_cells, 1)[0]
             i, j = Utils.get_position_from_id(cell_id)
@@ -92,7 +87,6 @@ class Mutation:
         self.clone.make_near_routers_movable(cell)
 
     def remove(self):
-        self.mutation_type = MutationType.REMOVE_ROUTER.value
         random_router = random.choice(self.clone.routers)
         self.clone.remove_router(random_router)
 

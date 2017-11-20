@@ -23,8 +23,8 @@ class Cell:
         return cell
 
     def __init__(self, i, j):
-        self.i = i
-        self.j = j
+        self.i = int(i)
+        self.j = int(j)
         self.id = str(self.i) + "," + str(self.j)
         self.distance_to_backbone = None
         self.type = None
