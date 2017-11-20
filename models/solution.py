@@ -45,7 +45,7 @@ class Solution:
         self.routers = []
         self.routers_set = set()
         self.connected_cells = {}
-        self.uu = {}
+        self.covered_cells = {}
         self.uncovered_cells = set(Building.get_target_cells_set())
         self.score = None
         self.score_calculation_needed = True
