@@ -169,7 +169,7 @@ class GeneticAlgorithm:
                 if abs(children.get_score() - person.get_score()) < 10:
                     common = len(children.routers_set.intersection(person.routers_set))
                     if common / len(children.routers_set) > 0.95:
-                        populate_to_return.pop(person.id)
+                        populate_to_return.pop(person.id, None)
                         Utils.log("Same solution")
                         break
 
@@ -187,7 +187,8 @@ class GeneticAlgorithm:
     def hill_climb(self, mutated_children):
         if HillClimb.t != 0:
             if len(mutated_children) > 1 and GeneticAlgorithm.multi_process:
-                func = partial(self.do_hill_climb, Solution.estimated_connection_cost, HillClimb.t, Mutation.radius)
+                func = partial(self.do_hill_climb, Solution.estimated_connection_cost, HillClimb.t,
+                               Mutation.radius, Solution.connect_cells_needed)
                 with Pool(processes=len(mutated_children)) as pool:
                     result = pool.map(func, mutated_children)
                     mutated_children = list(result)
@@ -198,10 +199,11 @@ class GeneticAlgorithm:
 
         return mutated_children
 
-    def do_hill_climb(self, estimated_connection_cost, t, radius, mutated_children):
+    def do_hill_climb(self, estimated_connection_cost, t, radius, connect_cells_needed, mutated_children):
         Solution.estimated_connection_cost = estimated_connection_cost
         HillClimb.t = t
         Mutation.radius = radius
+        Solution.connect_cells_needed = connect_cells_needed
         hill_climb = HillClimb(mutated_children)
         child = hill_climb.run_by_iterations()
         return child

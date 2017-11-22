@@ -1,8 +1,8 @@
 import random
-import time
 from multiprocessing import Pool
 from uuid import uuid4
 
+from config import Config
 from enums.cell_type import CellType
 from models.building import Building
 from models.cell import Cell
@@ -123,10 +123,15 @@ class Solution:
         self.score_calculation_needed = True
         Solution.connect_cells_needed = True
 
-        points = self.get_points_to_connect()
-        lines = computeGMST(points)
-        self.set_connected_cells_from_lines(lines)
-        Solution.estimated_connection_cost = (self.connected_cells_count() * Building.back_bone_cost)
+        if not self.is_feasible() or self.connected_cells_count() == 0:
+            if Config.input == 'lets_go_higher':
+                self.reconnect_routers()
+            else:
+                self.reconnect_routers()
+                points = self.get_points_to_connect()
+                lines = computeGMST(points)
+                self.set_connected_cells_from_lines(lines)
+                Solution.estimated_connection_cost = (self.connected_cells_count() * Building.back_bone_cost)
 
         while not self.is_feasible():
             self.sort_by_covered_cells()
@@ -148,6 +153,9 @@ class Solution:
         return
 
     def add_router(self, router):
+        if router.cell.id in self.routers_set:
+            return True
+
         if router.cell.get_type() != CellType.TARGET.value:
             return False
 
@@ -423,7 +431,7 @@ class Solution:
 
         string += str(len(self.routers)) + '\n'
         for router in self.routers:
-            string += str(router.cell.i) + ' ' + str(router.cell.i) + '\n'
+            string += str(router.cell.i) + ' ' + str(router.cell.j) + '\n'
 
         return string
 
