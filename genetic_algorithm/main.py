@@ -163,7 +163,7 @@ class GeneticAlgorithm:
         for children in mutated_children:
             for person in populate:
                 if children.id == person.id:
-                    populate_to_return.pop(person.id)
+                    populate_to_return.pop(person.id, None)
                     break
 
                 if abs(children.get_score() - person.get_score()) < 10:
