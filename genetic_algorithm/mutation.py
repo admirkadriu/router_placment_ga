@@ -17,11 +17,12 @@ class Mutation:
         self.mutation_type = None
 
     def shift(self):
-        random_router = random.choice(self.clone.routers)
-        self.clone.remove_router(random_router)
-        neighbor_cell = random.choice(random_router.cell.get_neighbor_target_cells(Mutation.radius))
-        self.clone.add_router(Router(neighbor_cell))
-        self.clone.make_near_routers_movable(neighbor_cell)
+        if self.clone.routers_count() > 0:
+            random_router = random.choice(self.clone.routers)
+            self.clone.remove_router(random_router)
+            neighbor_cell = random.choice(random_router.cell.get_neighbor_target_cells(Mutation.radius))
+            self.clone.add_router(Router(neighbor_cell))
+            self.clone.make_near_routers_movable(neighbor_cell)
 
     def clever_shift(self):
         score_before = self.clone.get_score()
@@ -58,22 +59,23 @@ class Mutation:
 
     def random_move(self):
         score_before = self.clone.get_score()
-        random_router = random.choice(self.clone.routers)
+        if self.clone.routers_count() > 0:
+            random_router = random.choice(self.clone.routers)
 
-        self.clone.remove_router(random_router)
+            self.clone.remove_router(random_router)
 
-        if len(self.clone.uncovered_cells) > 0 and random.random() < 0.75:
-            cell_id = random.sample(self.clone.uncovered_cells, 1)[0]
-            i, j = Utils.get_position_from_id(cell_id)
-            cell = Cell(i, j)
-        else:
-            cell = random.choice(Building.target_cells)
+            if len(self.clone.uncovered_cells) > 0 and random.random() < 0.75:
+                cell_id = random.sample(self.clone.uncovered_cells, 1)[0]
+                i, j = Utils.get_position_from_id(cell_id)
+                cell = Cell(i, j)
+            else:
+                cell = random.choice(Building.target_cells)
 
-        self.clone.add_router(Router(cell))
+            self.clone.add_router(Router(cell))
 
-        if not self.is_hill_climb or self.clone.get_score() >= score_before:
-            self.clone.make_near_routers_movable(random_router.cell)
-            self.clone.make_near_routers_movable(cell)
+            if not self.is_hill_climb or self.clone.get_score() >= score_before:
+                self.clone.make_near_routers_movable(random_router.cell)
+                self.clone.make_near_routers_movable(cell)
 
     def add(self):
         if len(self.clone.uncovered_cells) > 0:
@@ -87,8 +89,9 @@ class Mutation:
         self.clone.make_near_routers_movable(cell)
 
     def remove(self):
-        random_router = random.choice(self.clone.routers)
-        self.clone.remove_router(random_router)
+        if self.clone.routers_count() > 0:
+            random_router = random.choice(self.clone.routers)
+            self.clone.remove_router(random_router)
 
     def run(self):
         for index, person in enumerate(self.individuals):
